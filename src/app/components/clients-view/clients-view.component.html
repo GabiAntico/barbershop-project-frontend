@@ -1,0 +1,13 @@
+<div class="w-full flex justify-center">
+  <div class="p-5 max-w-[100vh] min-w-[100vh]">
+    <h1 class="text-2xl font-bold text-center mb-5">Ver todos los clientes</h1>
+    <p-listbox
+      [options]="clients"
+      optionValue="id"
+      [(ngModel)]="selectedClientId">
+      <ng-template let-client pTemplate="item">
+        {{ client.firstName }} {{ client.lastName }} - {{client.documentNumber}}
+      </ng-template>
+    </p-listbox>
+  </div>
+</div>

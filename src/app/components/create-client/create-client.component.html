@@ -1,0 +1,21 @@
+<div class="flex justify-center mt-12">
+  <form (submit)="postClient()" class="bg-neutral-700 flex flex-col w-[50vh] p-4 rounded-xl shadow-2xl" [formGroup]="form">
+    <h1 class="font-bold mb-4">Crear cliente</h1>
+    <div class="flex flex-col mb-4">
+      <label for="">Nombre</label>
+      <input pInputText type="text" formControlName="firstName">
+    </div>
+    <div class="flex flex-col mb-4">
+      <label for="">Apellido</label>
+      <input pInputText type="text" formControlName="lastName">
+    </div>
+    <div class="flex flex-col mb-4">
+      <label for="">DNI</label>
+      <input pInputText type="text" formControlName="documentNumber">
+    </div>
+    <div class="flex gap-2">
+      <p-button type="submit" severity="success">Guardar</p-button>
+      <p-button severity="danger">Cancelar</p-button>
+    </div>
+  </form>
+</div>
