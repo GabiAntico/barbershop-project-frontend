@@ -28,6 +28,8 @@ export class CreateShiftComponent implements OnInit {
   formShift!: FormGroup;
   clients: ClientResponse[] = [];
 
+  minDate = new Date();
+
   ngOnInit() {
     this.formShift = this.fb.group({
       date: ['', Validators.required],

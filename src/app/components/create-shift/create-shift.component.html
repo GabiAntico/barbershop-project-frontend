@@ -3,7 +3,9 @@
     <h1 class="font-bold mb-4">Crear cliente</h1>
     <div class="flex flex-col mb-4">
       <label for="">Fecha</label>
-      <p-date-picker type="text" formControlName="date"></p-date-picker>
+      <p-date-picker type="text" formControlName="date"
+      [minDate]="minDate"
+      ></p-date-picker>
     </div>
     <div class="flex flex-col mb-4">
       <label for="">Hora</label>
