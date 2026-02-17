@@ -56,8 +56,8 @@
         type="button"
         class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
                hover:bg-slate-800/40"
-        [ngClass]="selectedOption === 0 ? 'bg-slate-800/60 text-white' : 'text-slate-300'"
-        (click)="changeOption(0); sidebarOpen = false"
+        [routerLink]="['/create-client']"
+        [ngClass]="isActive('/create-client') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
       >
         <span class="w-5">👤</span>
         <span>Crear clientes</span>
@@ -67,8 +67,8 @@
         type="button"
         class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
                hover:bg-slate-800/40"
-        [ngClass]="selectedOption === 1 ? 'bg-slate-800/60 text-white' : 'text-slate-300'"
-        (click)="changeOption(1); sidebarOpen = false"
+        [routerLink]="['/clients-view']"
+        [ngClass]="isActive('/clients-view') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
       >
         <span class="w-5">📋</span>
         <span>Ver clientes</span>
@@ -78,8 +78,8 @@
         type="button"
         class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
                hover:bg-slate-800/40"
-        [ngClass]="selectedOption === 2 ? 'bg-slate-800/60 text-white' : 'text-slate-300'"
-        (click)="changeOption(2); sidebarOpen = false"
+        [routerLink]="['/create-shift']"
+        [ngClass]="isActive('/create-shift') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
       >
         <span class="w-5">📅</span>
         <span>Cargar turnos</span>
@@ -94,6 +94,7 @@
 
   <!-- Contenido principal -->
   <main class="px-4 py-6">
+    <p-toast></p-toast>
     <router-outlet></router-outlet>
   </main>
 </div>

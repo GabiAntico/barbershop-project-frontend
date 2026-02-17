@@ -8,7 +8,7 @@
 
       <button
         type="button"
-        class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium"
+        class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer"
         (click)="goToCreateClient()">
         + Nuevo cliente
       </button>
@@ -59,11 +59,11 @@
           </td>
           <td class="text-right py-2 pr-6">
             <div class="flex justify-end gap-2">
-              <button class="h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200"
+              <button class="h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
                       (click)="viewClient(c.id)">
                 Ver
               </button>
-              <button class="h-9 px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white"
+              <button class="h-9 px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer"
                       (click)="editClient(c.id)">
                 Editar
               </button>

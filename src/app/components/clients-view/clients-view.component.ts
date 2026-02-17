@@ -1,17 +1,16 @@
-import {Component, OnInit} from '@angular/core';
-import {Router} from 'express';
-import {ClientService} from '../../services/client.service';
-import {ClientResponse} from '../../models/client.model';
-import {Listbox} from 'primeng/listbox';
-import {FormsModule} from '@angular/forms';
-import {PrimeTemplate} from 'primeng/api';
-import {TableModule} from 'primeng/table';
-import {InputText} from 'primeng/inputtext';
+import {Component, OnInit, Output, EventEmitter} from '@angular/core';
+import { Router } from '@angular/router';
+import { ClientService } from '../../services/client.service';
+import { ClientResponse } from '../../models/client.model';
+import { Listbox } from 'primeng/listbox';
+import { FormsModule } from '@angular/forms';
+import { PrimeTemplate } from 'primeng/api';
+import { TableModule } from 'primeng/table';
+import { InputText } from 'primeng/inputtext';
 
 @Component({
   selector: 'app-clients-view',
   imports: [
-    Listbox,
     FormsModule,
     PrimeTemplate,
     TableModule,
@@ -27,7 +26,7 @@ export class ClientsViewComponent implements OnInit {
 
   selectedClientId: number = 0;
 
-  constructor(private clientService: ClientService) { }
+  constructor(private clientService: ClientService, private router: Router) { }
 
   ngOnInit() {
     this.clientService.getAllClients().subscribe({
@@ -38,7 +37,7 @@ export class ClientsViewComponent implements OnInit {
   }
 
   goToCreateClient(){
-
+    this.router.navigate(['/create-client']);
   }
 
   viewClient(id: number) {
