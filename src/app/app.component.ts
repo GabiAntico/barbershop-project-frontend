@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 })
 export class AppComponent implements OnInit {
   title = 'shifts-frontend';
+  sidebarOpen = false;
 
   selectedOption!: number;
 

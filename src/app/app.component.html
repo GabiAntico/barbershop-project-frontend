@@ -1,21 +1,99 @@
-<div class="flex items-center w-100vh py-3 px-3 gap-4 bg-indigo-800">
-  <button class="py-2 px-3 rounded-md cursor-pointer"
-          [ngClass]="{
-          'bg-gray-600/50': selectedOption === 0,
-          'bg-gray-400/50 hover:bg-gray-500/50': selectedOption !== 0
-          }"
-          (click)="changeOption(0)">Crear clientes</button>
-  <button class="py-2 px-3 rounded-md cursor-pointer"
-          [ngClass]="{
-          'bg-gray-600/50': selectedOption === 1,
-          'bg-gray-400/50 hover:bg-gray-500/50': selectedOption !== 1
-          }"
-          (click)="changeOption(1)">Ver clientes</button>
-  <button class="py-2 px-3 rounded-md cursor-pointer"
-          [ngClass]="{
-          'bg-gray-600/50': selectedOption === 2,
-          'bg-gray-400/50 hover:bg-gray-500/50': selectedOption !== 2
-          }"
-          (click)="changeOption(2)">Cargar turnos</button>
+<!-- Layout -->
+<div class="min-h-screen text-slate-100">
+
+  <!-- Topbar mínima -->
+  <header class="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b border-slate-800 bg-slate-950/70 backdrop-blur">
+    <!-- Botón hamburguesa -->
+    <button
+      type="button"
+      class="h-10 w-10 grid place-items-center rounded-lg hover:bg-slate-800/50"
+      (click)="sidebarOpen = true"
+      aria-label="Abrir menú"
+    >
+      ☰
+    </button>
+
+    <div class="font-semibold tracking-tight">Turnos</div>
+
+    <!-- (Opcional) mostrás la sección actual -->
+    <div class="ml-auto text-sm text-slate-400">
+      {{ selectedOption === 0 ? 'Crear clientes' : selectedOption === 1 ? 'Ver clientes' : 'Cargar turnos' }}
+    </div>
+  </header>
+
+  <!-- Overlay -->
+  @if(sidebarOpen){
+    <div
+      class="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
+      (click)="sidebarOpen = false"
+    ></div>
+  }
+
+
+  <!-- Sidebar Drawer -->
+  <aside
+    class="fixed top-0 left-0 z-40 h-full w-72 bg-slate-900 border-r border-slate-800
+           transform transition-transform duration-200 ease-out"
+    [ngClass]="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+  >
+    <!-- Header sidebar -->
+    <div class="flex items-center justify-between px-4 py-4 border-b border-slate-800">
+      <div class="font-semibold">Menú</div>
+
+      <button
+        type="button"
+        class="h-9 w-9 grid place-items-center rounded-lg hover:bg-slate-800/50"
+        (click)="sidebarOpen = false"
+        aria-label="Cerrar menú"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- Opciones -->
+    <nav class="p-2 space-y-1">
+      <button
+        type="button"
+        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+               hover:bg-slate-800/40"
+        [ngClass]="selectedOption === 0 ? 'bg-slate-800/60 text-white' : 'text-slate-300'"
+        (click)="changeOption(0); sidebarOpen = false"
+      >
+        <span class="w-5">👤</span>
+        <span>Crear clientes</span>
+      </button>
+
+      <button
+        type="button"
+        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+               hover:bg-slate-800/40"
+        [ngClass]="selectedOption === 1 ? 'bg-slate-800/60 text-white' : 'text-slate-300'"
+        (click)="changeOption(1); sidebarOpen = false"
+      >
+        <span class="w-5">📋</span>
+        <span>Ver clientes</span>
+      </button>
+
+      <button
+        type="button"
+        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+               hover:bg-slate-800/40"
+        [ngClass]="selectedOption === 2 ? 'bg-slate-800/60 text-white' : 'text-slate-300'"
+        (click)="changeOption(2); sidebarOpen = false"
+      >
+        <span class="w-5">📅</span>
+        <span>Cargar turnos</span>
+      </button>
+    </nav>
+
+    <!-- Footer sidebar (opcional) -->
+    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800 text-xs text-slate-400">
+      Shifts Frontend
+    </div>
+  </aside>
+
+  <!-- Contenido principal -->
+  <main class="px-4 py-6">
+    <router-outlet></router-outlet>
+  </main>
 </div>
-<router-outlet></router-outlet>

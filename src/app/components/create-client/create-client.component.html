@@ -1,21 +1,70 @@
 <div class="flex justify-center mt-12">
-  <form (submit)="postClient()" class="bg-neutral-700 flex flex-col w-[50vh] p-4 rounded-xl shadow-2xl" [formGroup]="form">
+  <form (ngSubmit)="postClient()" class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-[50vh] p-4 rounded-xl shadow-2xl" [formGroup]="form">
     <h1 class="font-bold mb-4">Crear cliente</h1>
     <div class="flex flex-col mb-4">
-      <label for="">Nombre</label>
-      <input pInputText type="text" formControlName="firstName">
+      <label for="">Email</label>
+      <input pInputText type="email" formControlName="email" class="w-full h-10 rounded-lg
+         !bg-slate-950
+         !border !border-slate-700
+         focus:!border-indigo-400
+         focus:!ring-0
+         !text-slate-100">
     </div>
     <div class="flex flex-col mb-4">
-      <label for="">Apellido</label>
-      <input pInputText type="text" formControlName="lastName">
+      <div class="flex items-center justify-start gap-2 mb-1">
+        <label class="text-slate-200">Nombre</label>
+        <span class="text-[11px] px-2 py-0.5 rounded-full
+                 bg-slate-800/70 border border-slate-700
+                 text-slate-300">
+          Opcional
+        </span>
+      </div>
+      <input pInputText type="text" formControlName="firstName" class="w-full h-10 rounded-lg
+         !bg-slate-950
+         !border !border-slate-700
+         focus:!border-indigo-400
+         focus:!ring-0
+         !text-slate-100">
     </div>
     <div class="flex flex-col mb-4">
-      <label for="">DNI</label>
-      <input pInputText type="text" formControlName="documentNumber">
+      <div class="flex items-center justify-start gap-2 mb-1">
+        <label class="text-slate-200">Apellido</label>
+        <span class="text-[11px] px-2 py-0.5 rounded-full
+                 bg-slate-800/70 border border-slate-700
+                 text-slate-300">
+          Opcional
+        </span>
+      </div>
+      <input pInputText type="text" formControlName="lastName" class="w-full h-10 rounded-lg
+         !bg-slate-950
+         !border !border-slate-700
+         focus:!border-indigo-400
+         focus:!ring-0
+         !text-slate-100">
+    </div>
+    <div class="flex flex-col mb-4">
+      <div class="flex items-center justify-start gap-2 mb-1">
+        <label class="text-slate-200">DNI</label>
+        <span class="text-[11px] px-2 py-0.5 rounded-full
+                 bg-slate-800/70 border border-slate-700
+                 text-slate-300">
+          Opcional
+        </span>
+      </div>
+      <input pInputText type="text" formControlName="documentNumber" class="w-full h-10 rounded-lg
+         !bg-slate-950
+         !border !border-slate-700
+         focus:!border-indigo-400
+         focus:!ring-0
+         !text-slate-100">
     </div>
     <div class="flex gap-2">
-      <p-button type="submit" severity="success">Guardar</p-button>
-      <p-button severity="danger">Cancelar</p-button>
+      <button type="submit" class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer">
+        Guardar
+      </button>
+      <button type="button" class="h-10 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer">
+        Cancelar
+      </button>
     </div>
   </form>
 </div>

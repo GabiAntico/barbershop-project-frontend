@@ -25,21 +25,24 @@ export class CreateClientComponent implements OnInit {
 
   ngOnInit() {
     this.form = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
-      documentNumber: ['', Validators.required]
+      email: ['', Validators.required, Validators.email],
+      firstName: [''],
+      lastName: [''],
+      documentNumber: ['']
     });
   }
 
   postClient(){
+
     const client: CreationClientRequest = {
+      email: this.form.controls['email'].value,
       firstName: this.form.controls['firstName'].value,
       lastName: this.form.controls['lastName'].value,
       documentNumber: this.form.controls['documentNumber'].value
     }
     this.clientService.postClient(client).subscribe({
-      next: (client: CreationClientRequest) => {
-        alert("Cliente guardado correctamente: \n" + client);
+      next: () => {
+        alert("Cliente guardado correctamente");
       }
     })
   }

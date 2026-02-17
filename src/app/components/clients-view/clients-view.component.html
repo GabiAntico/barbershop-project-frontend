@@ -1,13 +1,84 @@
-<div class="w-full flex justify-center">
-  <div class="p-5 max-w-[100vh] min-w-[100vh]">
-    <h1 class="text-2xl font-bold text-center mb-5">Ver todos los clientes</h1>
-    <p-listbox
-      [options]="clients"
-      optionValue="id"
-      [(ngModel)]="selectedClientId">
-      <ng-template let-client pTemplate="item">
-        {{ client.firstName }} {{ client.lastName }} - {{client.documentNumber}}
+<div class="flex justify-center mt-12 px-4">
+  <div class="w-full max-w-5xl bg-slate-900/60 border border-slate-800 backdrop-blur p-5 rounded-xl shadow-2xl">
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <div>
+        <h1 class="text-xl font-bold">Clientes</h1>
+        <p class="text-slate-300 text-sm">Gestioná tus clientes, buscá y editá rápido.</p>
+      </div>
+
+      <button
+        type="button"
+        class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium"
+        (click)="goToCreateClient()">
+        + Nuevo cliente
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-slate-300 text-sm">Buscar:</span>
+      <input
+        #search
+        pInputText
+        type="text"
+        class="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+        placeholder="Nombre, apellido o email..."
+        (input)="dt.filterGlobal(search.value, 'contains')"
+      />
+    </div>
+
+    <p-table
+      #dt
+      [value]="clients"
+      [paginator]="true"
+      [rows]="8"
+      [rowsPerPageOptions]="[8, 15, 25]"
+      [globalFilterFields]="['firstName','lastName','email']"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clientes"
+      styleClass="p-datatable-sm"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th class="pr-6 w-[180px]">
+            <div class="flex justify-end">
+              Acciones
+            </div>
+          </th>
+        </tr>
       </ng-template>
-    </p-listbox>
+
+      <ng-template pTemplate="body" let-c>
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="text-slate-100">
+            {{ (c.firstName || c.lastName) ? (c.firstName + ' ' + c.lastName) : '—' }}
+          </td>
+          <td class="text-slate-200">
+            {{ c.email }}
+          </td>
+          <td class="text-right py-2 pr-6">
+            <div class="flex justify-end gap-2">
+              <button class="h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200"
+                      (click)="viewClient(c.id)">
+                Ver
+              </button>
+              <button class="h-9 px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white"
+                      (click)="editClient(c.id)">
+                Editar
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="3" class="py-8 text-center text-slate-300">
+            No hay clientes para mostrar.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
   </div>
 </div>

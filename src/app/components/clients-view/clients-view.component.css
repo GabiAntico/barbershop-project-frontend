@@ -1,0 +1,36 @@
+/* Fondo general del datatable */
+:host ::ng-deep .p-datatable,
+:host ::ng-deep .p-datatable .p-datatable-table-container,
+:host ::ng-deep .p-datatable table {
+  background: transparent !important;
+}
+
+/* Header */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: rgba(2, 6, 23, 0.7) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(51, 65, 85, 0.6) !important;
+}
+
+/* Filas / celdas */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr {
+  background: rgba(15, 23, 42, 0.25) !important; /* slate-ish */
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(51, 65, 85, 0.45) !important;
+}
+
+/* Hover */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+  background: rgba(30, 41, 59, 0.35) !important;
+}
+
+/* Paginator */
+:host ::ng-deep .p-paginator {
+  background: transparent !important;
+  border: 0 !important;
+  color: #cbd5e1 !important;
+}

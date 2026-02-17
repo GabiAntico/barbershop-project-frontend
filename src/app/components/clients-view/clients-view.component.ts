@@ -5,13 +5,17 @@ import {ClientResponse} from '../../models/client.model';
 import {Listbox} from 'primeng/listbox';
 import {FormsModule} from '@angular/forms';
 import {PrimeTemplate} from 'primeng/api';
+import {TableModule} from 'primeng/table';
+import {InputText} from 'primeng/inputtext';
 
 @Component({
   selector: 'app-clients-view',
   imports: [
     Listbox,
     FormsModule,
-    PrimeTemplate
+    PrimeTemplate,
+    TableModule,
+    InputText
   ],
   templateUrl: './clients-view.component.html',
   standalone: true,
@@ -31,5 +35,17 @@ export class ClientsViewComponent implements OnInit {
         this.clients = data;
       }
     })
+  }
+
+  goToCreateClient(){
+
+  }
+
+  viewClient(id: number) {
+
+  }
+
+  editClient(id: number){
+
   }
 }
