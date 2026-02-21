@@ -24,20 +24,29 @@ export class CreateClientComponent implements OnInit {
 
   ngOnInit() {
     this.form = this.fb.group({
-      email: ['', Validators.required, Validators.email],
+      email: ['', [Validators.required, Validators.email]],
       firstName: [''],
       lastName: [''],
       documentNumber: ['']
     });
   }
 
-  postClient(){
+  postClient(form: FormGroup) {
+
+    if (form.invalid) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: "El formulario no es válido"
+      });
+      return;
+    }
 
     const client: CreationClientRequest = {
-      email: this.form.controls['email'].value,
-      firstName: this.form.controls['firstName'].value,
-      lastName: this.form.controls['lastName'].value,
-      documentNumber: this.form.controls['documentNumber'].value
+      email: form.controls['email'].value,
+      firstName: form.controls['firstName'].value,
+      lastName: form.controls['lastName'].value,
+      documentNumber: form.controls['documentNumber'].value
     }
     this.clientService.postClient(client).subscribe({
       next: () => {
