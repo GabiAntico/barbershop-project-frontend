@@ -5,8 +5,9 @@ import { ClientResponse } from '../../models/client.model';
 import { ClientService } from '../../services/client.service';
 import { Select } from 'primeng/select';
 import { MessageService, PrimeTemplate } from 'primeng/api';
-import {CreationShiftRequest} from '../../models/shift.model';
-import {ShiftService} from '../../services/shift.service';
+import { CreationShiftRequest } from '../../models/shift.model';
+import { ShiftService } from '../../services/shift.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-create-shift',
@@ -23,7 +24,7 @@ import {ShiftService} from '../../services/shift.service';
 })
 export class CreateShiftComponent implements OnInit {
 
-  constructor(private fb: FormBuilder, private shiftService: ShiftService, private clientService: ClientService, private messageService: MessageService) { }
+  constructor(private fb: FormBuilder, private shiftService: ShiftService, private clientService: ClientService, private messageService: MessageService, private router: Router) { }
 
   formShift!: FormGroup;
   clients: ClientResponse[] = [];
@@ -82,6 +83,7 @@ export class CreateShiftComponent implements OnInit {
           summary: 'Éxito',
           detail: 'Turno creado correctamente'
         });
+        this.router.navigate(['/shifts-view']);
       },
       error: () => {
         this.messageService.add({
