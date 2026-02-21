@@ -3,14 +3,15 @@ import { InputText } from 'primeng/inputtext';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CreationClientRequest } from '../../models/client.model';
 import { ClientService } from '../../services/client.service';
-import { Router } from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
 import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-create-client',
   imports: [
     InputText,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    RouterLink
   ],
   templateUrl: './create-client.component.html',
   styleUrl: './create-client.component.css',

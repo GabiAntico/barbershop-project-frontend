@@ -44,6 +44,6 @@ export class ClientsViewComponent implements OnInit {
   }
 
   editClient(id: number){
-
+    this.router.navigate(['/edit-client/' + id]);
   }
 }

@@ -20,4 +20,12 @@ export class ClientService {
   getAllClients(): Observable<ClientResponse[]> {
     return this.http.get<ClientResponse[]>(`${this.baseUrl}/clients`);
   }
+
+  getClientById(id: number): Observable<ClientResponse> {
+    return this.http.get<ClientResponse>(`${this.baseUrl}/clients/${id}`);
+  }
+
+  putClient(clientRequest: ClientResponse): Observable<ClientResponse> {
+    return this.http.put<ClientResponse>(`${this.baseUrl}/clients`, clientRequest);
+  }
 }
