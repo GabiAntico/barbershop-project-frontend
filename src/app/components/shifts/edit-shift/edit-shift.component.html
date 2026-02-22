@@ -1,0 +1,62 @@
+<div class="flex justify-center mt-12">
+  <form (ngSubmit)="putShift(formShift)" class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-[50vh] p-4 rounded-xl shadow-2xl" [formGroup]="formShift">
+    <h1 class="font-bold mb-4">Crear cliente</h1>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="flex flex-col">
+        <label>Fecha</label>
+        <!-- date picker -->
+        <p-date-picker
+          formControlName="date"
+          dateFormat="dd-mm-yy"
+          [minDate]="minDate"
+          styleClass="w-full"
+          inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+        ></p-date-picker>
+      </div>
+      <div class="flex flex-col">
+        <label>Hora</label>
+        <!-- time picker -->
+        <p-date-picker
+          formControlName="time"
+          [timeOnly]="true"
+          styleClass="w-full"
+          inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+        ></p-date-picker>
+      </div>
+    </div>
+    <div class="flex flex-col mb-4">
+      <label for="">Cliente</label>
+      <p-select
+        formControlName="client"
+        [filter]="true"
+        filterBy="firstName,lastName,email"
+        filterPlaceholder="Buscar cliente..."
+        emptyFilterMessage="No se encontraron resultados"
+        class="w-full h-10 rounded-lg
+         !bg-slate-950
+         !border !border-slate-700
+         focus:!border-indigo-400
+         focus:!ring-0
+         !text-slate-100"
+        [options]="clients"
+        optionValue="id"
+        placeholder="Seleccionar cliente">
+        <ng-template pTemplate="item" let-client>
+          @if(client.firstName && client.lastName) {{{ client.firstName }} {{ client.lastName }} - } {{client.email}}
+        </ng-template>
+
+        <ng-template pTemplate="selectedItem" let-client>
+          @if(client.firstName && client.lastName) {{{ client.firstName }} {{ client.lastName }} - } {{client.email}}
+        </ng-template>
+      </p-select>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer">
+        Guardar
+      </button>
+      <button [routerLink]="['/shifts-view']" type="button" class="h-10 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer">
+        Cancelar
+      </button>
+    </div>
+  </form>
+</div>

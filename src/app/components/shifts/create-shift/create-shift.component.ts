@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { DatePicker } from 'primeng/datepicker';
-import { ClientResponse } from '../../models/client.model';
-import { ClientService } from '../../services/client.service';
+import { ClientResponse } from '../../../models/client.model';
+import { ClientService } from '../../../services/client.service';
 import { Select } from 'primeng/select';
 import { MessageService, PrimeTemplate } from 'primeng/api';
-import { CreationShiftRequest } from '../../models/shift.model';
-import { ShiftService } from '../../services/shift.service';
-import {Router, RouterLink} from '@angular/router';
+import { CreationShiftRequest } from '../../../models/shift.model';
+import { ShiftService } from '../../../services/shift.service';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-create-shift',

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ClientService } from '../../services/client.service';
-import { ClientResponse } from '../../models/client.model';
+import { ClientService } from '../../../services/client.service';
+import { ClientResponse } from '../../../models/client.model';
 import { FormsModule } from '@angular/forms';
 import { PrimeTemplate } from 'primeng/api';
 import { TableModule } from 'primeng/table';

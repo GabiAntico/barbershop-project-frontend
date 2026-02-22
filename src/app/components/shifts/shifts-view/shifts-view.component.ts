@@ -2,8 +2,8 @@ import {Component, OnInit} from '@angular/core';
 import { Router } from '@angular/router';
 import {TableModule} from 'primeng/table';
 import {InputText} from 'primeng/inputtext';
-import {ShiftService} from '../../services/shift.service';
-import {ShiftCompleteResponse} from '../../models/shift.model';
+import {ShiftService} from '../../../services/shift.service';
+import {ShiftCompleteResponse} from '../../../models/shift.model';
 
 @Component({
   selector: 'app-shifts-view',
@@ -41,6 +41,6 @@ export class ShiftsViewComponent implements OnInit {
   }
 
   editShift(id: number){
-
+    this.router.navigate(['/edit-shift', id]);
   }
 }

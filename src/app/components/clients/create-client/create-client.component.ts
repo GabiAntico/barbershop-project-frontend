@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { InputText } from 'primeng/inputtext';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CreationClientRequest } from '../../models/client.model';
-import { ClientService } from '../../services/client.service';
+import { CreationClientRequest } from '../../../models/client.model';
+import { ClientService } from '../../../services/client.service';
 import {Router, RouterLink} from '@angular/router';
 import { MessageService } from 'primeng/api';
 

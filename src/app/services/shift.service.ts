@@ -20,4 +20,8 @@ export class ShiftService {
   getAllCompleteShifts(): Observable<ShiftCompleteResponse[]> {
     return this.http.get<ShiftCompleteResponse[]>(`${this.baseUrl}/shifts/complete`);
   }
+
+  getShiftById(id: number): Observable<ShiftResponse> {
+    return this.http.get<ShiftResponse>(`${this.baseUrl}/shifts/${id}`);
+  }
 }
