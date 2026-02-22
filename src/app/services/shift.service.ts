@@ -24,4 +24,8 @@ export class ShiftService {
   getShiftById(id: number): Observable<ShiftResponse> {
     return this.http.get<ShiftResponse>(`${this.baseUrl}/shifts/${id}`);
   }
+
+  putShift(id: number, shiftRequest: CreationShiftRequest): Observable<ShiftResponse> {
+    return this.http.put<ShiftResponse>(`${this.baseUrl}/shifts/${id}`, shiftRequest);
+  }
 }

@@ -7,7 +7,7 @@ import {MessageService, PrimeTemplate} from 'primeng/api';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {DatePicker} from 'primeng/datepicker';
 import {Select} from 'primeng/select';
-import {ShiftResponse} from '../../../models/shift.model';
+import {CreationShiftRequest, ShiftResponse} from '../../../models/shift.model';
 
 @Component({
   selector: 'app-edit-shift',
@@ -79,13 +79,42 @@ export class EditShiftComponent implements OnInit {
       return;
     }
 
-    const emptyToNull = (value: any) => {
-      if (value === undefined || value === null) return null;
-      if (typeof value === 'string') {
-        const trimmed = value.trim();
-        return trimmed === '' ? null : trimmed;
+    const date: Date = form.get('date')!.value;
+    const time: Date = form.get('time')!.value;
+    const clientId: number = form.get('client')!.value;
+
+    const dt = new Date(date);
+    dt.setHours(time.getHours(), time.getMinutes(), 0, 0);
+
+    const yyyy = dt.getFullYear();
+    const MM = String(dt.getMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getDate()).padStart(2, '0');
+    const HH = String(dt.getHours()).padStart(2, '0');
+    const mm = String(dt.getMinutes()).padStart(2, '0');
+
+    const datetime = `${yyyy}-${MM}-${dd} ${HH}:${mm}`;
+
+    const shiftRequest: CreationShiftRequest = {
+      datetime: datetime,
+      clientId: clientId,
+    }
+
+    this.shiftService.putShift(id ,shiftRequest).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Turno creado correctamente'
+        });
+        this.router.navigate(['/shifts-view']);
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: "Error al crear el turno"
+        })
       }
-      return value;
-    };
+    });
   }
 }
