@@ -34,13 +34,20 @@ export class EditShiftComponent implements OnInit {
   formShift!: FormGroup;
   clients: ClientResponse[] = [];
 
+  statusOptions = [
+    { label: 'Pendiente', value: 'PENDING' },
+    { label: 'Cancelado', value: 'CANCELLED' },
+    { label: 'Completado', value: 'COMPLETED' }
+  ];
+
   minDate = new Date();
 
   ngOnInit() {
     this.formShift = this.fb.group({
       date: [null, Validators.required],
       time: [null, Validators.required],
-      client: [null, Validators.required]
+      client: [null, Validators.required],
+      status: [null, Validators.required]
     })
 
     this.clientService.getAllClients().subscribe({
@@ -59,7 +66,8 @@ export class EditShiftComponent implements OnInit {
         this.formShift.patchValue({
           date: fullDate,
           time: fullDate,
-          client: data.clientId
+          client: data.clientId,
+          status: data.status,
         });
       }
     })
@@ -82,6 +90,7 @@ export class EditShiftComponent implements OnInit {
     const date: Date = form.get('date')!.value;
     const time: Date = form.get('time')!.value;
     const clientId: number = form.get('client')!.value;
+    const status: string = form.get('status')!.value;
 
     const dt = new Date(date);
     dt.setHours(time.getHours(), time.getMinutes(), 0, 0);
@@ -97,9 +106,10 @@ export class EditShiftComponent implements OnInit {
     const shiftRequest: CreationShiftRequest = {
       datetime: datetime,
       clientId: clientId,
+      status: status
     }
 
-    this.shiftService.putShift(id ,shiftRequest).subscribe({
+    this.shiftService.putShift(id, shiftRequest).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',

@@ -4,12 +4,14 @@ import {TableModule} from 'primeng/table';
 import {InputText} from 'primeng/inputtext';
 import {ShiftService} from '../../../services/shift.service';
 import {ShiftCompleteResponse} from '../../../models/shift.model';
+import {NgClass} from '@angular/common';
 
 @Component({
   selector: 'app-shifts-view',
   imports: [
     TableModule,
-    InputText
+    InputText,
+    NgClass
   ],
   templateUrl: './shifts-view.component.html',
   standalone: true,

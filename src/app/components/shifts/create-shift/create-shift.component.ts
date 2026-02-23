@@ -75,6 +75,7 @@ export class CreateShiftComponent implements OnInit {
     const shiftRequest: CreationShiftRequest = {
       datetime: datetime,
       clientId: clientId,
+      status: "PENDING"
     }
 
     this.shiftService.postShift(shiftRequest).subscribe({

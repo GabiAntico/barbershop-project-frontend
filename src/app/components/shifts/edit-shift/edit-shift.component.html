@@ -50,6 +50,22 @@
         </ng-template>
       </p-select>
     </div>
+    <div class="flex flex-col mb-4">
+      <label class="mb-1">Estado</label>
+      <p-select
+        [options]="statusOptions"
+        formControlName="status"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Seleccionar estado"
+        class="w-full h-10 rounded-lg
+         !bg-slate-950
+         !border !border-slate-700
+         focus:!border-indigo-400
+         focus:!ring-0
+         !text-slate-100">
+      </p-select>
+    </div>
     <div class="flex gap-2">
       <button type="submit" class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer">
         Guardar
