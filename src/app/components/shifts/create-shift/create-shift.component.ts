@@ -31,6 +31,7 @@ export class CreateShiftComponent implements OnInit {
   clients: ClientResponse[] = [];
 
   minDate = new Date();
+  minTime: Date | null = null;
 
   ngOnInit() {
     this.formShift = this.fb.group({
@@ -44,6 +45,11 @@ export class CreateShiftComponent implements OnInit {
         this.clients = data
       }
     })
+
+    this.formShift.get('date')!.valueChanges.subscribe((selectedDate: Date | null) => {
+      this.updateMinTimeAndFixTime(selectedDate);
+    });
+
   }
 
 
@@ -95,5 +101,48 @@ export class CreateShiftComponent implements OnInit {
         })
       }
     })
+  }
+
+  private roundUpToNextHalfHour(d: Date): Date {
+    const x = new Date(d);
+    x.setSeconds(0, 0);
+    const m = x.getMinutes();
+    const add = m === 0 || m === 30 ? 0 : (m < 30 ? (30 - m) : (60 - m));
+    x.setMinutes(m + add);
+    return x;
+  }
+
+  private isSameDay(a: Date, b: Date): boolean {
+    return a.getFullYear() === b.getFullYear()
+      && a.getMonth() === b.getMonth()
+      && a.getDate() === b.getDate();
+  }
+
+  private updateMinTimeAndFixTime(selectedDate: Date | null) {
+    const now = new Date();
+
+    if (!selectedDate) {
+      this.minTime = null;
+      return;
+    }
+
+    if (this.isSameDay(selectedDate, now)) {
+      this.minTime = this.roundUpToNextHalfHour(now);
+
+      const selectedTime: Date | null = this.formShift.get('time')!.value;
+
+      if (selectedTime) {
+        const candidate = new Date(selectedDate);
+        candidate.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0);
+
+        if (candidate.getTime() < this.minTime.getTime()) {
+          //this.formShift.get('time')!.setValue(null);
+
+          this.formShift.get('time')!.setValue(new Date(this.minTime));
+        }
+      }
+    } else {
+      this.minTime = null;
+    }
   }
 }
