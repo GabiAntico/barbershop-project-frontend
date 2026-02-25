@@ -3,19 +3,21 @@ import { ClientResponse } from './client.model';
 export interface CreationShiftRequest {
   datetime: string;
   clientId: number;
-  status: string;
+  status: ShiftStatus;
 }
 
 export interface ShiftResponse {
   id: number;
   datetime: string;
   clientId: number;
-  status: string;
+  status: ShiftStatus;
 }
 
 export interface ShiftCompleteResponse {
   id: number;
   datetime: string;
   client: ClientResponse;
-  status: string;
+  status: ShiftStatus;
 }
+
+export type ShiftStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';

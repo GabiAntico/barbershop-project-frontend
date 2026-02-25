@@ -34,3 +34,78 @@
   border: 0 !important;
   color: #cbd5e1 !important;
 }
+
+/* ===== Status filter (SelectButton) ===== */
+
+/* contenedor pill */
+:host ::ng-deep .status-filter .p-selectbutton {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.55) !important;
+  border: 1px solid rgba(51, 65, 85, 0.55) !important;
+}
+
+/* el host real del toggle */
+:host ::ng-deep .status-filter .p-togglebutton {
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+/* ✅ acá suele estar el fondo real (en algunas versiones) */
+:host ::ng-deep .status-filter .p-togglebutton-content {
+  background: rgba(15, 23, 42, 0.30) !important; /* ESTE es el “fondo base” */
+  border: 1px solid rgba(51, 65, 85, 0.45) !important;
+  padding: 6px 12px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease, border-color 150ms ease !important;
+}
+
+/* label */
+:host ::ng-deep .status-filter .p-togglebutton-label {
+  color: rgba(226, 232, 240, 0.78) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  transition: color 150ms ease !important;
+}
+
+/* hover */
+:host ::ng-deep .status-filter .p-togglebutton:hover .p-togglebutton-content {
+  background: rgba(148, 163, 184, 0.10) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton:hover .p-togglebutton-label {
+  color: rgba(226, 232, 240, 0.95) !important;
+}
+
+/* ✅ SELECCIONADO (compat: aria-pressed / clase checked / data attr) */
+:host ::ng-deep .status-filter .p-togglebutton[aria-pressed="true"] .p-togglebutton-content,
+:host ::ng-deep .status-filter .p-togglebutton.p-togglebutton-checked .p-togglebutton-content,
+:host ::ng-deep .status-filter .p-togglebutton[data-pc-checked="true"] .p-togglebutton-content {
+  background: rgba(99, 102, 241, 0.22) !important;
+  border-color: rgba(99, 102, 241, 0.45) !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton[aria-pressed="true"] .p-togglebutton-label,
+:host ::ng-deep .status-filter .p-togglebutton.p-togglebutton-checked .p-togglebutton-label,
+:host ::ng-deep .status-filter .p-togglebutton[data-pc-checked="true"] .p-togglebutton-label {
+  color: rgba(226, 232, 240, 1) !important;
+}
+
+/* focus */
+:host ::ng-deep .status-filter .p-togglebutton:focus-visible {
+  outline: none !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton:focus-visible .p-togglebutton-content {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18) !important;
+}

@@ -1,101 +1,138 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import {TableModule} from 'primeng/table';
-import {InputText} from 'primeng/inputtext';
-import {ShiftService} from '../../../services/shift.service';
-import {ShiftCompleteResponse} from '../../../models/shift.model';
-import {NgClass} from '@angular/common';
+import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { TableModule } from 'primeng/table';
+import { SelectButtonModule } from 'primeng/selectbutton';
+
+import { ShiftService } from '../../../services/shift.service';
+import { ShiftCompleteResponse, ShiftStatus } from '../../../models/shift.model';
+
+type StatusFilter = 'ALL' | ShiftStatus;
 
 @Component({
   selector: 'app-shifts-view',
-  imports: [
-    TableModule,
-    InputText,
-    NgClass
-  ],
-  templateUrl: './shifts-view.component.html',
   standalone: true,
-  styleUrl: './shifts-view.component.css'
+  imports: [TableModule, SelectButtonModule, FormsModule, NgClass],
+  templateUrl: './shifts-view.component.html',
+  styleUrl: './shifts-view.component.css',
 })
 export class ShiftsViewComponent implements OnInit {
 
   shifts: ShiftCompleteResponse[] = [];
-  originalSorted: ShiftCompleteResponse[] = [];
+  private originalSorted: ShiftCompleteResponse[] = [];
 
-  constructor(private shiftService: ShiftService, private router: Router) { }
+  selectedStatusFilter: StatusFilter = 'ALL';
+  private lastStatus: StatusFilter = 'ALL';
 
-  ngOnInit() {
+  readonly statusFilterOptions: { label: string; value: StatusFilter }[] = [
+    { label: 'Todos', value: 'ALL' },
+    { label: 'Pendientes', value: 'PENDING' },
+    { label: 'Completados', value: 'COMPLETED' },
+    { label: 'Cancelados', value: 'CANCELLED' },
+  ];
+
+  readonly statusLabels: Record<ShiftStatus, string> = {
+    PENDING: 'Pendiente',
+    COMPLETED: 'Completado',
+    CANCELLED: 'Cancelado',
+  };
+
+  getStatusLabel(status: ShiftStatus): string {
+    return this.statusLabels[status];
+  }
+
+  constructor(private shiftService: ShiftService, private router: Router) {}
+
+  ngOnInit(): void {
     this.shiftService.getAllCompleteShifts().subscribe({
       next: data => {
-        this.originalSorted = this.sortUpcomingThenPast(data);
-        this.shifts = [...this.originalSorted];
+        this.originalSorted = this.sortByGroups(data);
+
+        this.applyStatusFilter();
       },
-      error: err => {
-        console.error(err);
-      }
+      error: err => console.error(err)
     });
   }
 
-  goToCreateShift(){
+  goToCreateShift(): void {
     this.router.navigate(['/create-shift']);
   }
 
-  viewShift(id: number){
-
-  }
-
-  editShift(id: number){
+  editShift(id: number): void {
     this.router.navigate(['/edit-shift', id]);
   }
 
-  private parseShiftDate(datetime: string): Date | null {
-    if (!datetime) return null;
+  // ------------------- SelectButton (filtro) -------------------
+  /**
+   * Se ejecuta cuando cambia el SelectButton.
+   * Si value === null (se intentó deseleccionar), restauramos el último.
+   */
+  onStatusChange(event: any): void {
+    const value: StatusFilter | null = event?.value ?? null;
 
-    if (datetime.includes('T')) {
-      const d = new Date(datetime);
-      return isNaN(d.getTime()) ? null : d;
+    if (value === null) {
+      setTimeout(() => {
+        this.selectedStatusFilter = this.lastStatus;
+        this.applyStatusFilter();
+      }, 0);
+      return;
     }
 
-    const [datePart, timePart] = datetime.split(' ');
-    if (!datePart || !timePart) return null;
-
-    const [y, m, day] = datePart.split('-').map(Number);
-    const [hh, mm] = timePart.split(':').map(Number);
-
-    const d = new Date(y, m - 1, day, hh, mm, 0, 0);
-    return isNaN(d.getTime()) ? null : d;
+    this.selectedStatusFilter = value;
+    this.lastStatus = value;
+    this.applyStatusFilter();
   }
 
-  private sortUpcomingThenPast(shifts: any[]): any[] {
-    const now = Date.now();
-
-    const parsed = shifts.map(s => ({
-      s,
-      t: this.parseShiftDate(s.datetime)?.getTime() ?? null
-    }));
-
-    const valid = parsed.filter(x => x.t !== null) as { s: any; t: number }[];
-    const invalid = parsed.filter(x => x.t === null).map(x => x.s); // por si hay data rara
-
-    const upcoming = valid
-      .filter(x => x.t >= now)
-      .sort((a, b) => a.t - b.t)   // más cercano primero
-      .map(x => x.s);
-
-    const past = valid
-      .filter(x => x.t < now)
-      .sort((a, b) => b.t - a.t)   // más reciente pasado primero
-      .map(x => x.s);
-
-    return [...upcoming, ...past, ...invalid];
+  private applyStatusFilter(): void {
+    if (this.selectedStatusFilter === 'ALL') {
+      this.shifts = [...this.originalSorted];
+      return;
+    }
+    this.shifts = this.originalSorted.filter(s => s.status === this.selectedStatusFilter);
   }
 
-  resetSmartSort(table: any) {
-    this.shifts = [...this.originalSorted];
+  resetSmartSort(table: any): void {
+    this.selectedStatusFilter = 'ALL';
+    this.lastStatus = 'ALL';
+    this.applyStatusFilter();
 
     table.sortField = null;
     table.sortOrder = 0;
-
     table.clear();
   }
+
+  private parseShiftDate(datetime: string): number {
+    const d = new Date(datetime);
+    const t = d.getTime();
+    return isNaN(t) ? Number.POSITIVE_INFINITY : t;
+  }
+
+  private groupPriority(status: ShiftStatus, t: number, now: number): number {
+    const isFutureOrNow = t >= now;
+
+    if (isFutureOrNow && status === 'PENDING') return 0;
+    if (isFutureOrNow && (status === 'COMPLETED' || status === 'CANCELLED')) return 1;
+    return 2;
+  }
+
+  private sortByGroups(shifts: ShiftCompleteResponse[]): ShiftCompleteResponse[] {
+    const now = Date.now();
+
+    return [...shifts].sort((a, b) => {
+      const ta = this.parseShiftDate(a.datetime);
+      const tb = this.parseShiftDate(b.datetime);
+
+      const ga = this.groupPriority(a.status, ta, now);
+      const gb = this.groupPriority(b.status, tb, now);
+
+      if (ga !== gb) return ga - gb;
+
+      if (ga === 2) return tb - ta;
+
+      return ta - tb;
+    });
+  }
+
 }

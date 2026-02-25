@@ -1,13 +1,13 @@
 <div class="flex justify-center mt-12 px-4">
   <div class="w-full max-w-5xl bg-slate-900/60 border border-slate-800 backdrop-blur p-5 rounded-xl shadow-2xl">
+
     <div class="flex items-center justify-between gap-3 mb-4">
       <div>
         <h1 class="text-xl font-bold">Turnos</h1>
-        <p class="text-slate-300 text-sm">Gestioná tus turnos, buscá y editá rápido.</p>
+        <p class="text-slate-300 text-sm">Gestioná tus turnos y editá rápido.</p>
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- NUEVO BOTÓN -->
         <button
           type="button"
           class="h-10 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
@@ -24,16 +24,17 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-2 mb-3">
-      <span class="text-slate-300 text-sm">Buscar:</span>
-      <input
-        #search
-        pInputText
-        type="text"
-        class="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
-        placeholder="Fecha u hora..."
-        (input)="dt.filterGlobal(search.value, 'contains')"
-      />
+    <!-- filtro por estado -->
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <div class="status-filter">
+        <p-selectButton
+          [options]="statusFilterOptions"
+          [(ngModel)]="selectedStatusFilter"
+          (onChange)="onStatusChange($event)"
+          optionLabel="label"
+          optionValue="value">
+        </p-selectButton>
+      </div>
     </div>
 
     <p-table
@@ -42,9 +43,8 @@
       [paginator]="true"
       [rows]="8"
       [rowsPerPageOptions]="[8, 15, 25]"
-      [globalFilterFields]="['datetime','client']"
       [showCurrentPageReport]="true"
-      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clientes"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} turnos"
       styleClass="p-datatable-sm"
     >
       <ng-template pTemplate="header">
@@ -54,26 +54,25 @@
           <th>Cliente</th>
           <th>Estado</th>
           <th class="pr-6 w-[180px]">
-            <div class="flex justify-end">
-              Acciones
-            </div>
+            <div class="flex justify-end">Acciones</div>
           </th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-s>
         <tr class="hover:bg-slate-800/40 transition">
-          <!-- Fecha -->
           <td class="text-slate-100">
-            {{ s.datetime ? s.datetime.split(' ')[0] : '—' }}
+            {{ s.datetime ? (s.datetime.includes('T') ? s.datetime.split('T')[0] : s.datetime.split(' ')[0]) : '—' }}
           </td>
 
-          <!-- Hora -->
           <td class="text-slate-200">
-            {{ s.datetime ? s.datetime.split(' ')[1] : '—' }}
+            {{
+              s.datetime
+                ? (s.datetime.includes('T') ? s.datetime.split('T')[1].substring(0,5) : s.datetime.split(' ')[1])
+                : '—'
+            }}
           </td>
 
-          <!-- Cliente -->
           <td class="text-slate-100">
             {{
               s.client?.firstName || s.client?.lastName
@@ -82,7 +81,6 @@
             }}
           </td>
 
-          <!-- Estado -->
           <td>
             <span
               class="px-3 py-1 text-xs font-medium rounded-full"
@@ -92,19 +90,15 @@
                 'bg-red-500/20 text-red-400 border border-red-500/30': s.status === 'CANCELLED'
               }"
             >
-              {{
-                s.status === 'PENDING' ? 'Pendiente' :
-                  s.status === 'COMPLETED' ? 'Completado' :
-                    s.status === 'CANCELLED' ? 'Cancelado' :
-                      '—'
-              }}
+              {{ s?.status ? getStatusLabel(s.status) : '—' }}
             </span>
           </td>
 
           <td class="text-right py-2 pr-6">
             <div class="flex justify-end gap-2">
-              <button class="h-9 px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer"
-                      (click)="editShift(s.id)">
+              <button
+                class="h-9 px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer"
+                (click)="editShift(s.id)">
                 Editar
               </button>
             </div>
@@ -120,5 +114,6 @@
         </tr>
       </ng-template>
     </p-table>
+
   </div>
 </div>

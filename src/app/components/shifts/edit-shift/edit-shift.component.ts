@@ -7,7 +7,7 @@ import {MessageService, PrimeTemplate} from 'primeng/api';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {DatePicker} from 'primeng/datepicker';
 import {Select} from 'primeng/select';
-import {CreationShiftRequest, ShiftResponse} from '../../../models/shift.model';
+import {CreationShiftRequest, ShiftResponse, ShiftStatus} from '../../../models/shift.model';
 
 @Component({
   selector: 'app-edit-shift',
@@ -65,7 +65,6 @@ export class EditShiftComponent implements OnInit {
         const fullDate = new Date(data.datetime); // o data.datetime
         const now = new Date();
 
-        // Si el turno ya es pasado, no restringimos minDate para poder precargar
         this.minDate = fullDate < now ? new Date(2000, 0, 1) : now;
 
         setTimeout(() => {
@@ -97,7 +96,7 @@ export class EditShiftComponent implements OnInit {
     const date: Date = form.get('date')!.value;
     const time: Date = form.get('time')!.value;
     const clientId: number = form.get('client')!.value;
-    const status: string = form.get('status')!.value;
+    const status: ShiftStatus  = form.get('status')!.value;
 
     const dt = new Date(date);
     dt.setHours(time.getHours(), time.getMinutes(), 0, 0);
