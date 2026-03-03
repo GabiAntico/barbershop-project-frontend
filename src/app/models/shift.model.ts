@@ -3,7 +3,7 @@ import { ClientResponse } from './client.model';
 export interface CreationShiftRequest {
   datetime: string;
   clientId: number;
-  status: ShiftStatus;
+  status?: ShiftStatus;
 }
 
 export interface ShiftResponse {

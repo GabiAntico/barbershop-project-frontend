@@ -31,18 +31,4 @@ export class AppComponent implements OnInit {
   isActive(path: string): boolean {
     return this.router.url.startsWith(path);
   }
-
-  // changeOption(option: number) {
-  //   this.selectedOption = option;
-  //
-  //   if(option === 0) {
-  //     this.router.navigate(['/create-client']);
-  //   }
-  //   else if(option === 1) {
-  //     this.router.navigate(['/clients-view']);
-  //   }
-  //   else{
-  //     this.router.navigate(['/create-shift']);
-  //   }
-  // }
 }
