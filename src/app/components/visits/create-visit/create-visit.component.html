@@ -1,0 +1,156 @@
+<div class="flex justify-center mt-12">
+  <form
+    (ngSubmit)="postVisit()"
+    [formGroup]="formVisit"
+    class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-[62vh] p-4 rounded-xl shadow-2xl"
+  >
+    <h1 class="font-bold mb-4 text-slate-100">Crear visita</h1>
+
+    <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-4 mb-4">
+      <h2 class="text-sm font-semibold text-slate-200 mb-3">Información del turno</h2>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col">
+          <span class="text-xs text-slate-400 mb-1">Fecha</span>
+          <div class="h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 flex items-center text-slate-100">
+            {{
+              selectedShift?.datetime
+                ? (selectedShift.datetime.includes('T')
+                  ? selectedShift.datetime.split('T')[0]
+                  : selectedShift.datetime.split(' ')[0])
+                : '—'
+            }}
+          </div>
+        </div>
+
+        <div class="flex flex-col">
+          <span class="text-xs text-slate-400 mb-1">Hora</span>
+          <div class="h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 flex items-center text-slate-100">
+            {{
+              selectedShift?.datetime
+                ? (selectedShift.datetime.includes('T')
+                  ? selectedShift.datetime.split('T')[1]?.substring(0, 5)
+                  : selectedShift.datetime.split(' ')[1])
+                : '—'
+            }}
+          </div>
+        </div>
+
+        <div class="flex flex-col">
+          <span class="text-xs text-slate-400 mb-1">Cliente</span>
+          <div class="h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 flex items-center text-slate-100">
+            {{
+              selectedShift?.client?.firstName || selectedShift?.client?.lastName
+                ? ((selectedShift?.client?.firstName ?? '') + ' ' + (selectedShift?.client?.lastName ?? '')).trim()
+                : (selectedShift?.client?.email ?? '—')
+            }}
+          </div>
+        </div>
+
+        <div class="flex flex-col">
+          <span class="text-xs text-slate-400 mb-1">Estado del turno</span>
+          <div class="h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 flex items-center text-slate-100">
+            {{ selectedShift?.status ?? '—' }}
+          </div>
+        </div>
+
+        <div class="flex flex-col col-span-2">
+          <span class="text-xs text-slate-400 mb-1">Email del cliente</span>
+          <div class="h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 flex items-center text-slate-100">
+            {{ selectedShift?.client?.email ?? '—' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="flex flex-col">
+        <label class="text-slate-200 mb-1">Monto total</label>
+        <input
+          type="number"
+          formControlName="totalAmount"
+          placeholder="0.00"
+          class="w-full h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 focus:border-indigo-400 focus:outline-none"
+        />
+      </div>
+
+      <div class="flex flex-col">
+        <label class="text-slate-200 mb-1">Moneda</label>
+        <input
+          type="text"
+          formControlName="currency"
+          maxlength="3"
+          placeholder="ARS"
+          class="w-full h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 focus:border-indigo-400 focus:outline-none uppercase"
+        />
+      </div>
+    </div>
+
+    <div class="mb-4 flex flex-col">
+      <label class="text-slate-200 mb-1">Estado de pago</label>
+      <p-select
+        formControlName="paymentStatus"
+        [options]="paymentStatuses"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Seleccionar estado"
+        class="w-full h-10 rounded-lg
+          !bg-slate-950
+          !border !border-slate-700
+          focus:!border-indigo-400
+          focus:!ring-0
+          !text-slate-100"
+      ></p-select>
+    </div>
+
+    @if (formVisit.get('paymentStatus')?.value === 'PAID') {
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="flex flex-col">
+          <label class="text-slate-200 mb-1">Fecha de pago</label>
+          <p-date-picker
+            formControlName="paidAt"
+            [showTime]="true"
+            hourFormat="24"
+            dateFormat="dd-mm-yy"
+            styleClass="w-full"
+            inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+          ></p-date-picker>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-slate-200 mb-1">Método de pago</label>
+          <p-select
+            formControlName="paymentMethod"
+            [options]="paymentMethods"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccionar método"
+            class="w-full h-10 rounded-lg
+              !bg-slate-950
+              !border !border-slate-700
+              focus:!border-indigo-400
+              focus:!ring-0
+              !text-slate-100"
+          ></p-select>
+        </div>
+      </div>
+    }
+
+    <div class="flex gap-2">
+      <button
+        type="submit"
+        class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer"
+      >
+        Guardar
+      </button>
+
+      <button
+        [routerLink]="['/shifts-view']"
+        type="button"
+        class="h-10 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
+      >
+        Cancelar
+      </button>
+    </div>
+  </form>
+</div>

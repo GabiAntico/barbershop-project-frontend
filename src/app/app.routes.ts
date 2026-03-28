@@ -5,6 +5,7 @@ import {CreateShiftComponent} from './components/shifts/create-shift/create-shif
 import {ShiftsViewComponent} from './components/shifts/shifts-view/shifts-view.component';
 import {EditClientComponent} from './components/clients/edit-client/edit-client.component';
 import {EditShiftComponent} from './components/shifts/edit-shift/edit-shift.component';
+import {CreateVisitComponent} from './components/visits/create-visit/create-visit.component';
 
 export const routes: Routes = [
   {
@@ -27,5 +28,9 @@ export const routes: Routes = [
   },
   {
     path: 'edit-shift/:id', component: EditShiftComponent
+  },
+  {
+    path: 'visits/create/:shiftId',
+    component: CreateVisitComponent
   }
 ];
