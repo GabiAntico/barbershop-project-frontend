@@ -1,23 +1,23 @@
 <!-- Layout -->
 <div class="min-h-screen text-slate-100">
 
-  <!-- Topbar mínima -->
+  <!-- Topbar minima -->
   <header class="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b border-slate-800 bg-slate-950/70 backdrop-blur">
-    <!-- Botón hamburguesa -->
+    <!-- Boton hamburguesa -->
     <button
       type="button"
       class="h-10 w-10 grid place-items-center rounded-lg hover:bg-slate-800/50"
       (click)="sidebarOpen = true"
-      aria-label="Abrir menú"
+      aria-label="Abrir menu"
     >
-      ☰
+      &#9776;
     </button>
 
     <div class="font-semibold tracking-tight">Turnos</div>
 
-    <!-- (Opcional) mostrás la sección actual -->
+    <!-- Seccion actual -->
     <div class="ml-auto text-sm text-slate-400">
-      {{ selectedOption === 0 ? 'Crear clientes' : selectedOption === 1 ? 'Ver clientes' : 'Cargar turnos' }}
+      {{ getCurrentSectionLabel() }}
     </div>
   </header>
 
@@ -29,7 +29,6 @@
     ></div>
   }
 
-
   <!-- Sidebar Drawer -->
   <aside
     class="fixed top-0 left-0 z-40 h-full w-72 bg-slate-900 border-r border-slate-800
@@ -38,66 +37,143 @@
   >
     <!-- Header sidebar -->
     <div class="flex items-center justify-between px-4 py-4 border-b border-slate-800">
-      <div class="font-semibold">Menú</div>
+      <div class="font-semibold">Menu</div>
 
       <button
         type="button"
         class="h-9 w-9 grid place-items-center rounded-lg hover:bg-slate-800/50"
         (click)="sidebarOpen = false"
-        aria-label="Cerrar menú"
+        aria-label="Cerrar menu"
       >
-        ✕
+        &times;
       </button>
     </div>
 
     <!-- Opciones -->
-    <nav class="p-2 space-y-1">
-      <button
-        type="button"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
-               hover:bg-slate-800/40"
-        [routerLink]="['/create-client']"
-        [ngClass]="isActive('/create-client') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
-      >
-        <span class="w-5">👤</span>
-        <span>Crear clientes</span>
-      </button>
+    <nav class="p-2 space-y-4">
+      <section>
+        <div class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Cuenta
+        </div>
 
-      <button
-        type="button"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
-               hover:bg-slate-800/40"
-        [routerLink]="['/clients-view']"
-        [ngClass]="isActive('/clients-view') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
-      >
-        <span class="w-5">📋</span>
-        <span>Ver clientes</span>
-      </button>
+        <div class="space-y-1">
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                   hover:bg-slate-800/40"
+            [routerLink]="['/login']"
+            [ngClass]="isActive('/login') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
+          >
+            <span class="w-5">#</span>
+            <span>Login</span>
+          </button>
 
-      <button
-        type="button"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
-               hover:bg-slate-800/40"
-        [routerLink]="['/create-shift']"
-        [ngClass]="isActive('/create-shift') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
-      >
-        <span class="w-5">📅</span>
-        <span>Cargar turnos</span>
-      </button>
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                   hover:bg-slate-800/40"
+            [routerLink]="['/register']"
+            [ngClass]="isActive('/register') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
+          >
+            <span class="w-5">+</span>
+            <span>Register</span>
+          </button>
 
-      <button
-        type="button"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
-               hover:bg-slate-800/40"
-        [routerLink]="['/shifts-view']"
-        [ngClass]="isActive('/shifts-view') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
-      >
-        <span class="w-5">🗓️</span>
-        <span>Ver turnos</span>
-      </button>
+          @if (isLoggedIn()) {
+            <button
+              type="button"
+              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                     text-slate-300 hover:bg-slate-800/40 cursor-pointer"
+              (click)="logout()"
+            >
+              <span class="w-5">x</span>
+              <span>Cerrar sesion</span>
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="pt-3 border-t border-slate-800/80">
+        <div class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Clientes
+        </div>
+
+        <div class="space-y-1">
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                   hover:bg-slate-800/40"
+            [routerLink]="['/clients-view']"
+            [ngClass]="isActive('/clients-view') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
+          >
+            <span class="w-5">#</span>
+            <span>Ver clientes</span>
+          </button>
+
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                   hover:bg-slate-800/40"
+            [routerLink]="['/create-client']"
+            [ngClass]="isActive('/create-client') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
+          >
+            <span class="w-5">+</span>
+            <span>Crear cliente</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="pt-3 border-t border-slate-800/80">
+        <div class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Turnos
+        </div>
+
+        <div class="space-y-1">
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                   hover:bg-slate-800/40"
+            [routerLink]="['/shifts-view']"
+            [ngClass]="isActive('/shifts-view') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
+          >
+            <span class="w-5">#</span>
+            <span>Ver turnos</span>
+          </button>
+
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                   hover:bg-slate-800/40"
+            [routerLink]="['/create-shift']"
+            [ngClass]="isActive('/create-shift') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
+          >
+            <span class="w-5">+</span>
+            <span>Crear turno</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="pt-3 border-t border-slate-800/80">
+        <div class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Visitas
+        </div>
+
+        <div class="space-y-1">
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                   hover:bg-slate-800/40"
+            [routerLink]="['/visits-view']"
+            [ngClass]="isActive('/visits-view') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
+          >
+            <span class="w-5">#</span>
+            <span>Ver visitas</span>
+          </button>
+        </div>
+      </section>
     </nav>
 
-    <!-- Footer sidebar (opcional) -->
+    <!-- Footer sidebar -->
     <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800 text-xs text-slate-400">
       Shifts Frontend
     </div>

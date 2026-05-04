@@ -6,31 +6,51 @@ import {ShiftsViewComponent} from './components/shifts/shifts-view/shifts-view.c
 import {EditClientComponent} from './components/clients/edit-client/edit-client.component';
 import {EditShiftComponent} from './components/shifts/edit-shift/edit-shift.component';
 import {CreateVisitComponent} from './components/visits/create-visit/create-visit.component';
+import {VisitsViewComponent} from './components/visits/visits-view/visits-view.component';
+import {LoginComponent} from './components/auth/login/login.component';
+import {RegisterComponent} from './components/auth/register/register.component';
+import {AccessDeniedComponent} from './components/auth/access-denied/access-denied.component';
+import {authGuard} from './guards/auth.guard';
 
 export const routes: Routes = [
   {
-    path: '', pathMatch: 'full', redirectTo: 'create-client',
+    path: '', pathMatch: 'full', redirectTo: 'login',
   },
   {
-    path: 'create-client', component: CreateClientComponent
+    path: 'login', component: LoginComponent
   },
   {
-    path: 'clients-view', component: ClientsViewComponent
+    path: 'register', component: RegisterComponent
   },
   {
-    path: 'edit-client/:id', component: EditClientComponent
+    path: 'access-denied', component: AccessDeniedComponent
   },
   {
-    path: 'create-shift', component: CreateShiftComponent
+    path: 'create-client', component: CreateClientComponent, canActivate: [authGuard]
   },
   {
-    path: 'shifts-view', component: ShiftsViewComponent
+    path: 'clients-view', component: ClientsViewComponent, canActivate: [authGuard]
   },
   {
-    path: 'edit-shift/:id', component: EditShiftComponent
+    path: 'edit-client/:id', component: EditClientComponent, canActivate: [authGuard]
+  },
+  {
+    path: 'create-shift', component: CreateShiftComponent, canActivate: [authGuard]
+  },
+  {
+    path: 'shifts-view', component: ShiftsViewComponent, canActivate: [authGuard]
+  },
+  {
+    path: 'edit-shift/:id', component: EditShiftComponent, canActivate: [authGuard]
   },
   {
     path: 'visits/create/:shiftId',
-    component: CreateVisitComponent
+    component: CreateVisitComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'visits-view',
+    component: VisitsViewComponent,
+    canActivate: [authGuard]
   }
 ];

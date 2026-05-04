@@ -1,0 +1,103 @@
+/* Fondo general del datatable */
+:host ::ng-deep .p-datatable,
+:host ::ng-deep .p-datatable .p-datatable-table-container,
+:host ::ng-deep .p-datatable table {
+  background: transparent !important;
+}
+
+/* Header */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: rgba(2, 6, 23, 0.7) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(51, 65, 85, 0.6) !important;
+}
+
+/* Filas / celdas */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr {
+  background: rgba(15, 23, 42, 0.25) !important;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(51, 65, 85, 0.45) !important;
+}
+
+/* Hover */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+  background: rgba(30, 41, 59, 0.35) !important;
+}
+
+/* Paginator */
+:host ::ng-deep .p-paginator {
+  background: transparent !important;
+  border: 0 !important;
+  color: #cbd5e1 !important;
+}
+
+/* ===== Status filter (SelectButton) ===== */
+:host ::ng-deep .status-filter .p-selectbutton {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.55) !important;
+  border: 1px solid rgba(51, 65, 85, 0.55) !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton {
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton-content {
+  background: rgba(15, 23, 42, 0.30) !important;
+  border: 1px solid rgba(51, 65, 85, 0.45) !important;
+  padding: 6px 12px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease, border-color 150ms ease !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton-label {
+  color: rgba(226, 232, 240, 0.78) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  transition: color 150ms ease !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton:hover .p-togglebutton-content {
+  background: rgba(148, 163, 184, 0.10) !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton:hover .p-togglebutton-label {
+  color: rgba(226, 232, 240, 0.95) !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton[aria-pressed="true"] .p-togglebutton-content,
+:host ::ng-deep .status-filter .p-togglebutton.p-togglebutton-checked .p-togglebutton-content,
+:host ::ng-deep .status-filter .p-togglebutton[data-pc-checked="true"] .p-togglebutton-content {
+  background: rgba(99, 102, 241, 0.22) !important;
+  border-color: rgba(99, 102, 241, 0.45) !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton[aria-pressed="true"] .p-togglebutton-label,
+:host ::ng-deep .status-filter .p-togglebutton.p-togglebutton-checked .p-togglebutton-label,
+:host ::ng-deep .status-filter .p-togglebutton[data-pc-checked="true"] .p-togglebutton-label {
+  color: rgba(226, 232, 240, 1) !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton:focus-visible {
+  outline: none !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton:focus-visible .p-togglebutton-content {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18) !important;
+}

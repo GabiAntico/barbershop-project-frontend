@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import { Select } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
 import {ShiftService} from '../../../services/shift.service';
 import {map, switchMap, take} from 'rxjs';
 import {ClientService} from '../../../services/client.service';
+import {VisitService} from '../../../services/visit.service';
 
 @Component({
   selector: 'app-create-visit',
@@ -38,7 +39,9 @@ export class CreateVisitComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private shiftService: ShiftService,
-    private clientService: ClientService
+    private clientService: ClientService,
+    private visitService: VisitService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -107,12 +110,29 @@ export class CreateVisitComponent implements OnInit {
       return;
     }
 
+    const formValue = this.formVisit.value;
+
     const payload = {
       shiftId: this.shiftId,
-      ...this.formVisit.value
+      ...this.formVisit.value,
+      paidAt: this.formatLocalDateTime(formValue.paidAt)
     };
 
-    console.log(payload);
-    // llamar service
+    this.visitService.postVisit(payload).subscribe({
+      next: (response) => {
+        this.router.navigate(['/shifts-view']);
+      },
+      error: (err) => {
+        console.log("ERROR: ", err);
+      }
+    })
+  }
+
+  formatLocalDateTime(date: Date): string | null {
+    if (!date) return null;
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 }

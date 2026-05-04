@@ -1,0 +1,63 @@
+<div class="flex justify-center mt-12 px-4">
+  <form
+    [formGroup]="form"
+    (ngSubmit)="register()"
+    class="w-full max-w-md bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col p-5 rounded-xl shadow-2xl"
+  >
+    <div class="mb-5">
+      <h1 class="text-xl font-bold text-slate-100">Crear cuenta</h1>
+      <p class="text-slate-300 text-sm">Registra un usuario para ingresar al sistema.</p>
+    </div>
+
+    <div class="flex flex-col mb-4">
+      <label class="text-slate-200 mb-1">Email</label>
+      <input
+        pInputText
+        type="email"
+        formControlName="email"
+        placeholder="usuario@email.com"
+        class="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 focus:!border-indigo-400 focus:!ring-0 !text-slate-100"
+      />
+    </div>
+
+    <div class="flex flex-col mb-4">
+      <label class="text-slate-200 mb-1">Contraseña</label>
+      <input
+        pInputText
+        type="password"
+        formControlName="password"
+        placeholder="Minimo 6 caracteres"
+        class="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 focus:!border-indigo-400 focus:!ring-0 !text-slate-100"
+      />
+    </div>
+
+    <div class="flex flex-col mb-5">
+      <label class="text-slate-200 mb-1">Confirmar contraseña</label>
+      <input
+        pInputText
+        type="password"
+        formControlName="confirmPassword"
+        placeholder="Repeti tu contraseña"
+        class="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 focus:!border-indigo-400 focus:!ring-0 !text-slate-100"
+      />
+    </div>
+
+    <div class="flex items-center justify-between gap-2">
+      <button
+        type="submit"
+        class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+        [disabled]="isSubmitting"
+      >
+        Registrarme
+      </button>
+
+      <button
+        [routerLink]="['/login']"
+        type="button"
+        class="h-10 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
+      >
+        Ya tengo cuenta
+      </button>
+    </div>
+  </form>
+</div>
