@@ -11,6 +11,8 @@ import {LoginComponent} from './components/auth/login/login.component';
 import {RegisterComponent} from './components/auth/register/register.component';
 import {AccessDeniedComponent} from './components/auth/access-denied/access-denied.component';
 import {authGuard} from './guards/auth.guard';
+import {SettingsViewComponent} from './components/settings/settings-view/settings-view.component';
+import {AgendaViewComponent} from './components/shifts/agenda-view/agenda-view.component';
 
 export const routes: Routes = [
   {
@@ -27,6 +29,9 @@ export const routes: Routes = [
   },
   {
     path: 'create-client', component: CreateClientComponent, canActivate: [authGuard]
+  },
+  {
+    path: 'agenda', component: AgendaViewComponent, canActivate: [authGuard]
   },
   {
     path: 'clients-view', component: ClientsViewComponent, canActivate: [authGuard]
@@ -51,6 +56,11 @@ export const routes: Routes = [
   {
     path: 'visits-view',
     component: VisitsViewComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'settings',
+    component: SettingsViewComponent,
     canActivate: [authGuard]
   }
 ];

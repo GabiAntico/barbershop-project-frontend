@@ -8,6 +8,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 
 import { ShiftService } from '../../../services/shift.service';
 import { ShiftCompleteResponse, ShiftStatus } from '../../../models/shift.model';
+import { ClientResponse } from '../../../models/client.model';
 
 type StatusFilter = 'ALL' | ShiftStatus;
 
@@ -41,6 +42,14 @@ export class ShiftsViewComponent implements OnInit {
 
   getStatusLabel(status: ShiftStatus): string {
     return this.statusLabels[status];
+  }
+
+  getClientName(client: ClientResponse | null | undefined): string {
+    if (!client) return '—';
+
+    const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
+
+    return fullName || '—';
   }
 
   constructor(private shiftService: ShiftService, private router: Router) {}

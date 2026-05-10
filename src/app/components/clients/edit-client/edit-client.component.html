@@ -2,7 +2,26 @@
   <form (ngSubmit)="putClient(form)" class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-[50vh] p-4 rounded-xl shadow-2xl" [formGroup]="form">
     <h1 class="font-bold mb-4">Editar cliente</h1>
     <div class="flex flex-col mb-4">
-      <label for="">Email</label>
+      <label class="text-slate-200 mb-1">Telefono</label>
+      <input pInputText type="tel" formControlName="phoneNumber" class="w-full h-10 rounded-lg
+         !bg-slate-950
+         !border !border-slate-700
+         focus:!border-indigo-400
+         focus:!ring-0
+         !text-slate-100">
+      @if (form.get('phoneNumber')!.hasError('required') && form.get('phoneNumber')!.touched) {
+        <span class="mt-1 text-sm text-red-300">Ingresá un telefono.</span>
+      }
+    </div>
+    <div class="flex flex-col mb-4">
+      <div class="flex items-center justify-start gap-2 mb-1">
+        <label class="text-slate-200">Email</label>
+        <span class="text-[11px] px-2 py-0.5 rounded-full
+                 bg-slate-800/70 border border-slate-700
+                 text-slate-300">
+          Opcional
+        </span>
+      </div>
       <input pInputText type="email" formControlName="email" class="w-full h-10 rounded-lg
          !bg-slate-950
          !border !border-slate-700

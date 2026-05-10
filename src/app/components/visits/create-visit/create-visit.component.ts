@@ -35,6 +35,12 @@ export class CreateVisitComponent implements OnInit {
     { label: 'Tarjeta', value: 'CARD' }
   ];
 
+  readonly shiftStatusLabels: Record<string, string> = {
+    PENDING: 'Pendiente',
+    COMPLETED: 'Completado',
+    CANCELLED: 'Cancelado'
+  };
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -83,6 +89,9 @@ export class CreateVisitComponent implements OnInit {
     this.shiftService.getShiftById(this.shiftId).pipe(
       switchMap(shift => {
         this.selectedShift = shift;
+        this.formVisit.patchValue({
+          totalAmount: shift.estimatedAmount ?? null
+        });
 
         return this.clientService.getClientById(shift.clientId).pipe(
           map(client => ({ shift, client }))
@@ -134,5 +143,11 @@ export class CreateVisitComponent implements OnInit {
     const pad = (n: number) => n.toString().padStart(2, '0');
 
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  getShiftStatusLabel(status: string | null | undefined): string {
+    if (!status) return '—';
+
+    return this.shiftStatusLabels[status] ?? status;
   }
 }

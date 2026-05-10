@@ -50,7 +50,7 @@
         <div class="flex flex-col">
           <span class="text-xs text-slate-400 mb-1">Estado del turno</span>
           <div class="h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 flex items-center text-slate-100">
-            {{ selectedShift?.status ?? '—' }}
+            {{ getShiftStatusLabel(selectedShift?.status) }}
           </div>
         </div>
 

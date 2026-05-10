@@ -57,28 +57,6 @@
         </div>
 
         <div class="space-y-1">
-          <button
-            type="button"
-            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
-                   hover:bg-slate-800/40"
-            [routerLink]="['/login']"
-            [ngClass]="isActive('/login') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
-          >
-            <span class="w-5">#</span>
-            <span>Login</span>
-          </button>
-
-          <button
-            type="button"
-            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
-                   hover:bg-slate-800/40"
-            [routerLink]="['/register']"
-            [ngClass]="isActive('/register') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
-          >
-            <span class="w-5">+</span>
-            <span>Register</span>
-          </button>
-
           @if (isLoggedIn()) {
             <button
               type="button"
@@ -90,6 +68,25 @@
               <span>Cerrar sesion</span>
             </button>
           }
+        </div>
+      </section>
+
+      <section class="pt-3 border-t border-slate-800/80">
+        <div class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Agenda
+        </div>
+
+        <div class="space-y-1">
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                   hover:bg-slate-800/40"
+            [routerLink]="['/agenda']"
+            [ngClass]="isActive('/agenda') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
+          >
+            <span class="w-5">#</span>
+            <span>Agenda</span>
+          </button>
         </div>
       </section>
 
@@ -168,6 +165,25 @@
           >
             <span class="w-5">#</span>
             <span>Ver visitas</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="pt-3 border-t border-slate-800/80">
+        <div class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Configuracion
+        </div>
+
+        <div class="space-y-1">
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
+                   hover:bg-slate-800/40"
+            [routerLink]="['/settings']"
+            [ngClass]="isActive('/settings') ? 'bg-slate-800/60 text-white' : 'text-slate-300 hover:bg-slate-800/40 cursor-pointer'"
+          >
+            <span class="w-5">#</span>
+            <span>Configuracion</span>
           </button>
         </div>
       </section>

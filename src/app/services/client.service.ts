@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {ClientResponse, CreationClientRequest} from '../models/client.model';
+import {ClientRequest, ClientResponse, CreationClientRequest} from '../models/client.model';
 import {environment} from '../../environments/environment';
 
 @Injectable({
@@ -25,7 +25,7 @@ export class ClientService {
     return this.http.get<ClientResponse>(`${this.baseUrl}/clients/${id}`);
   }
 
-  putClient(clientRequest: ClientResponse): Observable<ClientResponse> {
+  putClient(clientRequest: ClientRequest): Observable<ClientResponse> {
     return this.http.put<ClientResponse>(`${this.baseUrl}/clients`, clientRequest);
   }
 }

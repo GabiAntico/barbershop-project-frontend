@@ -7,7 +7,8 @@ import {MessageService, PrimeTemplate} from 'primeng/api';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {DatePicker} from 'primeng/datepicker';
 import {Select} from 'primeng/select';
-import {CreationShiftRequest, ShiftResponse, ShiftStatus} from '../../../models/shift.model';
+import {CreationShiftRequest, ShiftResponse, ShiftStatus, TimeSlotAvailabilityResponse} from '../../../models/shift.model';
+import {InputText} from 'primeng/inputtext';
 
 @Component({
   selector: 'app-edit-shift',
@@ -16,7 +17,8 @@ import {CreationShiftRequest, ShiftResponse, ShiftStatus} from '../../../models/
     DatePicker,
     Select,
     RouterLink,
-    PrimeTemplate
+    PrimeTemplate,
+    InputText
   ],
   templateUrl: './edit-shift.component.html',
   standalone: true,
@@ -33,6 +35,11 @@ export class EditShiftComponent implements OnInit {
 
   formShift!: FormGroup;
   clients: ClientResponse[] = [];
+  timeSlots: TimeSlotAvailabilityResponse[] = [];
+  loadingTimeSlots = false;
+  shiftId!: number;
+  originalShiftDate: string | null = null;
+  originalShiftTime: string | null = null;
 
   statusOptions = [
     { label: 'Pendiente', value: 'PENDING' },
@@ -47,59 +54,70 @@ export class EditShiftComponent implements OnInit {
       date: [null, Validators.required],
       time: [null, Validators.required],
       client: [null, Validators.required],
-      status: [null, Validators.required]
-    })
+      status: [null, Validators.required],
+      estimatedAmount: [0, [Validators.min(0)]]
+    });
 
     this.clientService.getAllClients().subscribe({
       next: data => {
-        this.clients = data
+        this.clients = data;
       }
     });
 
-    const id = this.route.snapshot.paramMap.get('id');
-    this.shiftService.getShiftById(Number(id)).subscribe({
-      next: (data: ShiftResponse) => {
+    this.formShift.get('date')!.valueChanges.subscribe((selectedDate: Date | null) => {
+      this.formShift.get('time')!.setValue(null);
+      this.loadAvailability(selectedDate);
+    });
 
+    this.shiftId = Number(this.route.snapshot.paramMap.get('id'));
+    this.shiftService.getShiftById(this.shiftId).subscribe({
+      next: (data: ShiftResponse) => {
         if (!data.datetime) return;
 
-        const fullDate = new Date(data.datetime); // o data.datetime
+        const fullDate = new Date(data.datetime);
         const now = new Date();
 
         this.minDate = fullDate < now ? new Date(2000, 0, 1) : now;
 
-        setTimeout(() => {
-          this.formShift.patchValue({
-            date: fullDate,
-            time: fullDate,
-            client: data.clientId,
-            status: data.status,
-          });
-        });
-      }
-    })
-  }
+        const selectedTime = this.formatTime(fullDate);
+        this.originalShiftDate = this.formatDate(fullDate);
+        this.originalShiftTime = selectedTime;
 
+        this.formShift.patchValue({
+          date: fullDate,
+          time: selectedTime,
+          client: data.clientId,
+          status: data.status,
+          estimatedAmount: data.estimatedAmount ?? 0
+        }, { emitEvent: false });
+
+        this.loadAvailability(fullDate, selectedTime);
+      }
+    });
+  }
 
   putShift(form: FormGroup) {
     if (form.invalid) {
       form.markAllAsTouched();
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Formulario inválido' });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Formulario invalido' });
       return;
     }
 
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id || isNaN(id)) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'ID inválido' });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'ID invalido' });
       return;
     }
 
     const date: Date = form.get('date')!.value;
-    const time: Date = form.get('time')!.value;
+    const time: string = form.get('time')!.value;
     const clientId: number = form.get('client')!.value;
     const status: ShiftStatus  = form.get('status')!.value;
+    const estimatedAmount = form.get('estimatedAmount')!.value;
 
     const dt = new Date(date);
-    dt.setHours(time.getHours(), time.getMinutes(), 0, 0);
+    const [hours, minutes] = time.split(':').map(Number);
+    dt.setHours(hours, minutes, 0, 0);
 
     const yyyy = dt.getFullYear();
     const MM = String(dt.getMonth() + 1).padStart(2, '0');
@@ -112,15 +130,16 @@ export class EditShiftComponent implements OnInit {
     const shiftRequest: CreationShiftRequest = {
       datetime: datetime,
       clientId: clientId,
-      status: status
-    }
+      status: status,
+      estimatedAmount: estimatedAmount === null || estimatedAmount === '' ? null : Number(estimatedAmount)
+    };
 
     this.shiftService.putShift(id, shiftRequest).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
-          summary: 'Éxito',
-          detail: 'Turno creado correctamente'
+          summary: 'Exito',
+          detail: 'Turno editado correctamente'
         });
         this.router.navigate(['/shifts-view']);
       },
@@ -128,9 +147,89 @@ export class EditShiftComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: "Error al crear el turno"
-        })
+          detail: 'Error al editar el turno'
+        });
       }
+    });
+  }
+
+  selectTimeSlot(slot: TimeSlotAvailabilityResponse) {
+    if (!slot.available) return;
+
+    this.formShift.get('time')!.setValue(slot.time);
+  }
+
+  isSelectedTime(slot: TimeSlotAvailabilityResponse): boolean {
+    return this.formShift.get('time')!.value === slot.time;
+  }
+
+  getClientLabel(client: ClientResponse): string {
+    const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
+    const contact = client.email ? `${client.phoneNumber} - ${client.email}` : client.phoneNumber;
+
+    return fullName ? `${fullName} - ${client.phoneNumber}` : contact || '';
+  }
+
+  private loadAvailability(selectedDate: Date | null, selectedTime?: string) {
+    if (!selectedDate) {
+      this.timeSlots = [];
+      return;
+    }
+
+    this.loadingTimeSlots = true;
+    this.shiftService.getAvailabilityByDate(this.formatDate(selectedDate), this.shiftId).subscribe({
+      next: timeSlots => {
+        this.timeSlots = this.keepOriginalSlotAvailable(timeSlots, selectedDate);
+        this.loadingTimeSlots = false;
+
+        if (selectedTime) {
+          this.formShift.get('time')!.setValue(selectedTime);
+        }
+      },
+      error: () => {
+        this.timeSlots = [];
+        this.loadingTimeSlots = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los horarios disponibles'
+        });
+      }
+    });
+  }
+
+  private formatDate(date: Date): string {
+    const yyyy = date.getFullYear();
+    const MM = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+
+    return `${yyyy}-${MM}-${dd}`;
+  }
+
+  private formatTime(date: Date): string {
+    const HH = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+
+    return `${HH}:${mm}`;
+  }
+
+  private keepOriginalSlotAvailable(
+    timeSlots: TimeSlotAvailabilityResponse[],
+    selectedDate: Date
+  ): TimeSlotAvailabilityResponse[] {
+    const selectedDateValue = this.formatDate(selectedDate);
+
+    if (selectedDateValue !== this.originalShiftDate || !this.originalShiftTime) {
+      return timeSlots;
+    }
+
+    return timeSlots.map(slot => {
+      if (slot.time !== this.originalShiftTime) return slot;
+
+      return {
+        ...slot,
+        available: true
+      };
     });
   }
 }

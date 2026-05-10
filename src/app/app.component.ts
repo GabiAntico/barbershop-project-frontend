@@ -37,11 +37,13 @@ export class AppComponent implements OnInit {
     if (this.isActive('/login')) return 'Iniciar sesion';
     if (this.isActive('/register')) return 'Crear cuenta';
     if (this.isActive('/access-denied')) return 'Acceso denegado';
+    if (this.isActive('/agenda')) return 'Agenda';
     if (this.isActive('/create-client')) return 'Crear clientes';
     if (this.isActive('/clients-view')) return 'Ver clientes';
     if (this.isActive('/create-shift')) return 'Cargar turnos';
     if (this.isActive('/shifts-view')) return 'Ver turnos';
     if (this.isActive('/visits-view')) return 'Ver visitas';
+    if (this.isActive('/settings')) return 'Configuracion';
 
     return 'Turnos';
   }

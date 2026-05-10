@@ -43,6 +43,10 @@ export class ClientsViewComponent implements OnInit {
 
   }
 
+  getClientName(client: ClientResponse): string {
+    return [client.firstName, client.lastName].filter(Boolean).join(' ') || '—';
+  }
+
   editClient(id: number){
     this.router.navigate(['/edit-client/' + id]);
   }

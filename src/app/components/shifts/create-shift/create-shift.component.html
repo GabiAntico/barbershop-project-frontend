@@ -1,10 +1,9 @@
 <div class="flex justify-center mt-12">
-  <form (ngSubmit)="postShift(formShift)" class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-[50vh] p-4 rounded-xl shadow-2xl" [formGroup]="formShift">
+  <form (ngSubmit)="postShift(formShift)" class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-full max-w-2xl p-4 rounded-xl shadow-2xl" [formGroup]="formShift">
     <h1 class="font-bold mb-4">Crear turno</h1>
-    <div class="grid grid-cols-2 gap-4 mb-4">
+    <div class="grid grid-cols-1 gap-4 mb-4">
       <div class="flex flex-col">
         <label>Fecha</label>
-        <!-- date picker -->
         <p-date-picker
           formControlName="date"
           dateFormat="dd-mm-yy"
@@ -13,16 +12,42 @@
           inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
         ></p-date-picker>
       </div>
-      <div class="flex flex-col">
-        <label>Hora</label>
-        <!-- time picker -->
-        <p-date-picker
-          formControlName="time"
-          [minDate]="minTime"
-          [timeOnly]="true"
-          styleClass="w-full"
-          inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
-        ></p-date-picker>
+    </div>
+    <div class="flex flex-col mb-4">
+      <label>Hora</label>
+      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-1">
+        @if (loadingTimeSlots) {
+          <div class="col-span-full h-24 rounded-lg border border-slate-800 bg-slate-950/70 flex items-center justify-center text-sm text-slate-400">
+            Cargando horarios...
+          </div>
+        } @else if (!formShift.get('date')!.value) {
+          <div class="col-span-full h-24 rounded-lg border border-slate-800 bg-slate-950/70 flex items-center justify-center text-sm text-slate-400">
+            Seleccioná una fecha
+          </div>
+        } @else {
+          @for (slot of timeSlots; track slot.time) {
+            <button
+              type="button"
+              (click)="selectTimeSlot(slot)"
+              [disabled]="!slot.available"
+              class="h-14 rounded-lg border text-sm font-semibold transition-colors"
+              [class.border-indigo-300]="isSelectedTime(slot)"
+              [class.bg-indigo-500]="isSelectedTime(slot)"
+              [class.text-white]="isSelectedTime(slot)"
+              [class.border-slate-700]="!isSelectedTime(slot) && slot.available"
+              [class.bg-slate-950]="!isSelectedTime(slot) && slot.available"
+              [class.text-slate-100]="!isSelectedTime(slot) && slot.available"
+              [class.hover:bg-slate-800]="!isSelectedTime(slot) && slot.available"
+              [class.cursor-pointer]="slot.available"
+              [class.border-slate-800]="!slot.available"
+              [class.bg-slate-800]="!slot.available"
+              [class.text-slate-500]="!slot.available"
+              [class.cursor-not-allowed]="!slot.available"
+            >
+              {{ slot.time }}
+            </button>
+          }
+        }
       </div>
     </div>
     <div class="flex flex-col mb-4">
@@ -30,7 +55,7 @@
       <p-select
         formControlName="client"
         [filter]="true"
-        filterBy="firstName,lastName,email"
+        filterBy="firstName,lastName,email,phoneNumber"
         filterPlaceholder="Buscar cliente..."
         emptyFilterMessage="No se encontraron resultados"
         class="w-full h-10 rounded-lg
@@ -43,13 +68,32 @@
         optionValue="id"
         placeholder="Seleccionar cliente">
         <ng-template pTemplate="item" let-client>
-          @if(client.firstName && client.lastName) {{{ client.firstName }} {{ client.lastName }} - } {{client.email}}
+          {{ getClientLabel(client) }}
         </ng-template>
 
         <ng-template pTemplate="selectedItem" let-client>
-          @if(client.firstName && client.lastName) {{{ client.firstName }} {{ client.lastName }} - } {{client.email}}
+          {{ getClientLabel(client) }}
         </ng-template>
       </p-select>
+    </div>
+    <div class="flex flex-col mb-4">
+      <label class="mb-1">Monto estimado</label>
+      <input
+        pInputText
+        type="number"
+        min="0"
+        step="0.01"
+        formControlName="estimatedAmount"
+        class="w-full h-10 rounded-lg
+         !bg-slate-950
+         !border !border-slate-700
+         focus:!border-indigo-400
+         focus:!ring-0
+         !text-slate-100"
+      >
+      @if (formShift.get('estimatedAmount')!.hasError('min') && formShift.get('estimatedAmount')!.touched) {
+        <span class="mt-1 text-sm text-red-300">El monto no puede ser negativo.</span>
+      }
     </div>
     <div class="flex gap-2">
       <button type="submit" class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer">

@@ -25,7 +25,8 @@ export class CreateClientComponent implements OnInit {
 
   ngOnInit() {
     this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.email]],
+      phoneNumber: ['', [Validators.required]],
       firstName: [''],
       lastName: [''],
       documentNumber: ['']
@@ -35,6 +36,7 @@ export class CreateClientComponent implements OnInit {
   postClient(form: FormGroup) {
 
     if (form.invalid) {
+      form.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -44,10 +46,11 @@ export class CreateClientComponent implements OnInit {
     }
 
     const client: CreationClientRequest = {
-      email: form.controls['email'].value,
-      firstName: form.controls['firstName'].value,
-      lastName: form.controls['lastName'].value,
-      documentNumber: form.controls['documentNumber'].value
+      email: this.emptyToNull(form.controls['email'].value),
+      phoneNumber: form.controls['phoneNumber'].value.trim(),
+      firstName: this.emptyToNull(form.controls['firstName'].value),
+      lastName: this.emptyToNull(form.controls['lastName'].value),
+      documentNumber: this.emptyToNull(form.controls['documentNumber'].value)
     }
     this.clientService.postClient(client).subscribe({
       next: () => {
@@ -66,5 +69,11 @@ export class CreateClientComponent implements OnInit {
         })
       }
     });
+  }
+  private emptyToNull(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+
+    const trimmed = value.trim();
+    return trimmed === '' ? null : trimmed;
   }
 }

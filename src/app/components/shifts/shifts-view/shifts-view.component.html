@@ -52,6 +52,7 @@
           <th pSortableColumn="datetime">Fecha <p-sortIcon field="datetime"></p-sortIcon></th>
           <th pSortableColumn="datetime">Hora <p-sortIcon field="datetime"></p-sortIcon></th>
           <th>Cliente</th>
+          <th>Telefono</th>
           <th>Estado</th>
           <th class="pr-6 w-[180px]">
             <div class="flex justify-end">Acciones</div>
@@ -74,11 +75,11 @@
           </td>
 
           <td class="text-slate-100">
-            {{
-              s.client?.firstName || s.client?.lastName
-                ? ((s.client?.firstName ?? '') + ' ' + (s.client?.lastName ?? '')).trim()
-                : (s.client?.email ?? '—')
-            }}
+            {{ getClientName(s.client) }}
+          </td>
+
+          <td class="text-slate-200">
+            {{ s.client?.phoneNumber || '—' }}
           </td>
 
           <td>
@@ -117,7 +118,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="5" class="py-8 text-center text-slate-300">
+          <td colspan="6" class="py-8 text-center text-slate-300">
             No hay turnos para mostrar.
           </td>
         </tr>

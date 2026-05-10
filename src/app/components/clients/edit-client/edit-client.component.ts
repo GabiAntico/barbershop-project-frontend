@@ -34,7 +34,8 @@ export class EditClientComponent implements OnInit {
       firstName: [''],
       lastName: [''],
       documentNumber: [''],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.email]],
+      phoneNumber: ['', [Validators.required]],
     });
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -46,6 +47,7 @@ export class EditClientComponent implements OnInit {
           lastName: client.lastName ?? '',
           documentNumber: client.documentNumber ?? '',
           email: client.email ?? '',
+          phoneNumber: client.phoneNumber ?? '',
         });
       },
       error: (err) => {
@@ -82,10 +84,9 @@ export class EditClientComponent implements OnInit {
       firstName: emptyToNull(form.get('firstName')?.value),
       lastName: emptyToNull(form.get('lastName')?.value),
       documentNumber: emptyToNull(form.get('documentNumber')?.value),
-      email: form.get('email')?.value?.trim()
+      email: emptyToNull(form.get('email')?.value),
+      phoneNumber: form.get('phoneNumber')?.value.trim()
     };
-
-    console.log(clientRequest);
 
     this.clientService.putClient(clientRequest).subscribe({
       next: () => {

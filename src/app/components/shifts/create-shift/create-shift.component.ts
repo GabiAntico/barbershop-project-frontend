@@ -5,9 +5,11 @@ import { ClientResponse } from '../../../models/client.model';
 import { ClientService } from '../../../services/client.service';
 import { Select } from 'primeng/select';
 import { MessageService, PrimeTemplate } from 'primeng/api';
-import { CreationShiftRequest } from '../../../models/shift.model';
+import { CreationShiftRequest, TimeSlotAvailabilityResponse } from '../../../models/shift.model';
 import { ShiftService } from '../../../services/shift.service';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { InputText } from 'primeng/inputtext';
+import { SettingsService } from '../../../services/settings.service';
 
 @Component({
   selector: 'app-create-shift',
@@ -17,7 +19,8 @@ import { Router, RouterLink } from '@angular/router';
     DatePicker,
     Select,
     PrimeTemplate,
-    RouterLink
+    RouterLink,
+    InputText
   ],
   templateUrl: './create-shift.component.html',
   styleUrl: './create-shift.component.css',
@@ -25,19 +28,29 @@ import { Router, RouterLink } from '@angular/router';
 })
 export class CreateShiftComponent implements OnInit {
 
-  constructor(private fb: FormBuilder, private shiftService: ShiftService, private clientService: ClientService, private messageService: MessageService, private router: Router) { }
+  constructor(
+    private fb: FormBuilder,
+    private shiftService: ShiftService,
+    private clientService: ClientService,
+    private settingsService: SettingsService,
+    private messageService: MessageService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) { }
 
   formShift!: FormGroup;
   clients: ClientResponse[] = [];
+  timeSlots: TimeSlotAvailabilityResponse[] = [];
+  loadingTimeSlots = false;
 
   minDate = new Date();
-  minTime: Date | null = null;
 
   ngOnInit() {
     this.formShift = this.fb.group({
       date: [null, Validators.required],
       time: [null, Validators.required],
-      client: [null, Validators.required]
+      client: [null, Validators.required],
+      estimatedAmount: [0, [Validators.min(0)]]
     })
 
     this.clientService.getAllClients().subscribe({
@@ -46,9 +59,34 @@ export class CreateShiftComponent implements OnInit {
       }
     })
 
+    this.settingsService.getSettings().subscribe({
+      next: settings => {
+        this.formShift.patchValue({
+          estimatedAmount: settings.defaultEstimatedAmount ?? 0
+        });
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo cargar el monto por defecto'
+        });
+      }
+    })
+
     this.formShift.get('date')!.valueChanges.subscribe((selectedDate: Date | null) => {
-      this.updateMinTimeAndFixTime(selectedDate);
+      this.formShift.get('time')!.setValue(null);
+      this.loadAvailability(selectedDate);
     });
+
+    const dateParam = this.route.snapshot.queryParamMap.get('date');
+    const timeParam = this.route.snapshot.queryParamMap.get('time');
+
+    if (dateParam) {
+      const selectedDate = this.parseDateParam(dateParam);
+      this.formShift.patchValue({ date: selectedDate }, { emitEvent: false });
+      this.loadAvailability(selectedDate, timeParam ?? undefined);
+    }
 
   }
 
@@ -64,11 +102,13 @@ export class CreateShiftComponent implements OnInit {
     }
 
     const date: Date = form.get('date')!.value;
-    const time: Date = form.get('time')!.value;
+    const time: string = form.get('time')!.value;
     const clientId: number = form.get('client')!.value;
+    const estimatedAmount = form.get('estimatedAmount')!.value;
 
     const dt = new Date(date);
-    dt.setHours(time.getHours(), time.getMinutes(), 0, 0);
+    const [hours, minutes] = time.split(':').map(Number);
+    dt.setHours(hours, minutes, 0, 0);
 
     const yyyy = dt.getFullYear();
     const MM = String(dt.getMonth() + 1).padStart(2, '0');
@@ -80,7 +120,8 @@ export class CreateShiftComponent implements OnInit {
 
     const shiftRequest: CreationShiftRequest = {
       datetime: datetime,
-      clientId: clientId
+      clientId: clientId,
+      estimatedAmount: estimatedAmount === null || estimatedAmount === '' ? null : Number(estimatedAmount)
     }
 
     this.shiftService.postShift(shiftRequest).subscribe({
@@ -102,46 +143,62 @@ export class CreateShiftComponent implements OnInit {
     })
   }
 
-  private roundUpToNextHalfHour(d: Date): Date {
-    const x = new Date(d);
-    x.setSeconds(0, 0);
-    const m = x.getMinutes();
-    const add = m === 0 || m === 30 ? 0 : (m < 30 ? (30 - m) : (60 - m));
-    x.setMinutes(m + add);
-    return x;
+  selectTimeSlot(slot: TimeSlotAvailabilityResponse) {
+    if (!slot.available) return;
+
+    this.formShift.get('time')!.setValue(slot.time);
   }
 
-  private isSameDay(a: Date, b: Date): boolean {
-    return a.getFullYear() === b.getFullYear()
-      && a.getMonth() === b.getMonth()
-      && a.getDate() === b.getDate();
+  isSelectedTime(slot: TimeSlotAvailabilityResponse): boolean {
+    return this.formShift.get('time')!.value === slot.time;
   }
 
-  private updateMinTimeAndFixTime(selectedDate: Date | null) {
-    const now = new Date();
+  getClientLabel(client: ClientResponse): string {
+    const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
+    const contact = client.email ? `${client.phoneNumber} - ${client.email}` : client.phoneNumber;
 
+    return fullName ? `${fullName} - ${client.phoneNumber}` : contact || '';
+  }
+
+  private loadAvailability(selectedDate: Date | null, selectedTime?: string) {
     if (!selectedDate) {
-      this.minTime = null;
+      this.timeSlots = [];
       return;
     }
 
-    if (this.isSameDay(selectedDate, now)) {
-      this.minTime = this.roundUpToNextHalfHour(now);
+    this.loadingTimeSlots = true;
+    this.shiftService.getAvailabilityByDate(this.formatDate(selectedDate)).subscribe({
+      next: timeSlots => {
+        this.timeSlots = timeSlots;
+        this.loadingTimeSlots = false;
 
-      const selectedTime: Date | null = this.formShift.get('time')!.value;
-
-      if (selectedTime) {
-        const candidate = new Date(selectedDate);
-        candidate.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0);
-
-        if (candidate.getTime() < this.minTime.getTime()) {
-          //this.formShift.get('time')!.setValue(null);
-
-          this.formShift.get('time')!.setValue(new Date(this.minTime));
+        if (selectedTime) {
+          this.formShift.get('time')!.setValue(selectedTime);
         }
+      },
+      error: () => {
+        this.timeSlots = [];
+        this.loadingTimeSlots = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los horarios disponibles'
+        });
       }
-    } else {
-      this.minTime = null;
-    }
+    });
+  }
+
+  private formatDate(date: Date): string {
+    const yyyy = date.getFullYear();
+    const MM = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+
+    return `${yyyy}-${MM}-${dd}`;
+  }
+
+  private parseDateParam(date: string): Date {
+    const [year, month, day] = date.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
   }
 }

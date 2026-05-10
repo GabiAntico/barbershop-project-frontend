@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
-import {CreationShiftRequest, ShiftCompleteResponse, ShiftResponse} from '../models/shift.model';
+import {AgendaSlotResponse, CreationShiftRequest, ShiftCompleteResponse, ShiftResponse, TimeSlotAvailabilityResponse} from '../models/shift.model';
 import {Observable} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 
@@ -23,6 +23,24 @@ export class ShiftService {
 
   getShiftById(id: number): Observable<ShiftResponse> {
     return this.http.get<ShiftResponse>(`${this.baseUrl}/shifts/${id}`);
+  }
+
+  getAvailabilityByDate(date: string, excludeShiftId?: number): Observable<TimeSlotAvailabilityResponse[]> {
+    const params: Record<string, string> = { date };
+
+    if (excludeShiftId) {
+      params['excludeShiftId'] = String(excludeShiftId);
+    }
+
+    return this.http.get<TimeSlotAvailabilityResponse[]>(`${this.baseUrl}/shifts/availability`, {
+      params
+    });
+  }
+
+  getAgendaByDate(date: string): Observable<AgendaSlotResponse[]> {
+    return this.http.get<AgendaSlotResponse[]>(`${this.baseUrl}/shifts/agenda`, {
+      params: { date }
+    });
   }
 
   putShift(id: number, shiftRequest: CreationShiftRequest): Observable<ShiftResponse> {
