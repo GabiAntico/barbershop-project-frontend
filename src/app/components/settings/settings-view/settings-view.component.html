@@ -1,39 +1,186 @@
-<div class="flex justify-center mt-12">
-  <form
-    (ngSubmit)="saveSettings(form)"
-    class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-full max-w-xl p-4 rounded-xl shadow-2xl"
-    [formGroup]="form"
-  >
+<div class="flex justify-center mt-12 px-4">
+  <div class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-full max-w-3xl p-4 rounded-xl shadow-2xl">
     <h1 class="font-bold mb-4">Configuracion</h1>
 
-    <div class="flex flex-col mb-4">
-      <label class="text-slate-200 mb-1">Monto estimado por defecto</label>
-      <input
-        pInputText
-        type="number"
-        min="0"
-        step="0.01"
-        formControlName="defaultEstimatedAmount"
-        class="w-full h-10 rounded-lg
-         !bg-slate-950
-         !border !border-slate-700
-         focus:!border-indigo-400
-         focus:!ring-0
-         !text-slate-100"
-      >
-      @if (form.get('defaultEstimatedAmount')!.hasError('min') && form.get('defaultEstimatedAmount')!.touched) {
-        <span class="mt-1 text-sm text-red-300">El monto no puede ser negativo.</span>
-      }
-    </div>
-
-    <div class="flex gap-2">
+    <div class="flex gap-2 mb-5 border-b border-slate-800 pb-3">
       <button
-        type="submit"
-        [disabled]="form.invalid || !hasSettingsChanges()"
-        class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+        type="button"
+        class="h-10 px-4 rounded-lg text-sm font-medium cursor-pointer"
+        [class.bg-indigo-500]="activeTab === 'amount'"
+        [class.text-white]="activeTab === 'amount'"
+        [class.bg-slate-800]="activeTab !== 'amount'"
+        [class.text-slate-300]="activeTab !== 'amount'"
+        (click)="setActiveTab('amount')"
       >
-        Guardar
+        Monto estimado
+      </button>
+      <button
+        type="button"
+        class="h-10 px-4 rounded-lg text-sm font-medium cursor-pointer"
+        [class.bg-indigo-500]="activeTab === 'schedule'"
+        [class.text-white]="activeTab === 'schedule'"
+        [class.bg-slate-800]="activeTab !== 'schedule'"
+        [class.text-slate-300]="activeTab !== 'schedule'"
+        (click)="setActiveTab('schedule')"
+      >
+        Horarios
       </button>
     </div>
-  </form>
+
+    @if (activeTab === 'amount') {
+      <form (ngSubmit)="saveSettings(amountForm)" [formGroup]="amountForm">
+        <div class="flex flex-col mb-4">
+          <label class="text-slate-200 mb-1">Monto estimado por defecto</label>
+          <input
+            pInputText
+            type="number"
+            min="0"
+            step="0.01"
+            formControlName="defaultEstimatedAmount"
+            class="w-full h-10 rounded-lg
+             !bg-slate-950
+             !border !border-slate-700
+             focus:!border-indigo-400
+             focus:!ring-0
+             !text-slate-100"
+          >
+          @if (amountForm.get('defaultEstimatedAmount')!.hasError('min') && amountForm.get('defaultEstimatedAmount')!.touched) {
+            <span class="mt-1 text-sm text-red-300">El monto no puede ser negativo.</span>
+          }
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="amountForm.invalid || !hasSettingsChanges()"
+          class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+        >
+          Guardar
+        </button>
+      </form>
+    }
+
+    @if (activeTab === 'schedule') {
+      <form [formGroup]="scheduleForm" class="flex flex-col gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <label class="flex items-center gap-2 h-10 px-3 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+            <input type="radio" name="scheduleMode" value="DATE" [checked]="scheduleMode === 'DATE'" (change)="onScheduleModeChange('DATE')">
+            <span>Fecha unica</span>
+          </label>
+          <label class="flex items-center gap-2 h-10 px-3 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+            <input type="radio" name="scheduleMode" value="RANGE" [checked]="scheduleMode === 'RANGE'" (change)="onScheduleModeChange('RANGE')">
+            <span>Rango de fechas</span>
+          </label>
+          <label class="flex items-center gap-2 h-10 px-3 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer">
+            <input type="radio" name="scheduleMode" value="DEFAULT" [checked]="scheduleMode === 'DEFAULT'" (change)="onScheduleModeChange('DEFAULT')">
+            <span>Todos los dias</span>
+          </label>
+        </div>
+
+        @if (scheduleMode === 'DATE') {
+          <div class="flex flex-col">
+            <label class="text-slate-200 mb-1">Fecha</label>
+            <p-date-picker
+              formControlName="date"
+              dateFormat="dd-mm-yy"
+              [minDate]="minScheduleDate"
+              styleClass="w-full"
+              inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+              (onSelect)="loadSchedule()"
+            ></p-date-picker>
+          </div>
+        }
+
+        @if (scheduleMode === 'RANGE') {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="flex flex-col">
+              <label class="text-slate-200 mb-1">Desde</label>
+              <p-date-picker
+                formControlName="startDate"
+                dateFormat="dd-mm-yy"
+                [minDate]="minScheduleDate"
+                styleClass="w-full"
+                inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+                (onSelect)="onRangeStartDateSelected()"
+              ></p-date-picker>
+            </div>
+            <div class="flex flex-col">
+              <label class="text-slate-200 mb-1">Hasta</label>
+              <p-date-picker
+                formControlName="endDate"
+                dateFormat="dd-mm-yy"
+                [minDate]="getMinRangeEndDate()"
+                styleClass="w-full"
+                inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+                (onSelect)="onRangeEndDateSelected()"
+              ></p-date-picker>
+            </div>
+          </div>
+        }
+
+        <div class="rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+          <div class="flex flex-col sm:flex-row gap-2 sm:items-end mb-3">
+            <div class="flex flex-col flex-1">
+              <label class="text-slate-200 mb-1">Agregar horario</label>
+              <p-date-picker
+                [(ngModel)]="newSlotTime"
+                [ngModelOptions]="{ standalone: true }"
+                [timeOnly]="true"
+                hourFormat="24"
+                styleClass="w-full"
+                inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+              ></p-date-picker>
+            </div>
+            <button
+              type="button"
+              class="h-10 px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
+              (click)="addSlot()"
+            >
+              Agregar
+            </button>
+          </div>
+
+          @if (loadingSchedule) {
+            <div class="h-20 flex items-center justify-center text-slate-400">Cargando horarios...</div>
+          } @else {
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              @for (slot of slots; track slot.time) {
+                <div
+                  class="h-12 px-3 rounded-lg border flex items-center justify-between gap-2"
+                  [ngClass]="isConflictingSlot(slot.time) ? 'bg-red-500/10 border-red-500/40' : (slot.occupied ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-slate-900 border-slate-700')"
+                >
+                  <div class="flex flex-col leading-tight">
+                    <span class="font-semibold">{{ slot.time }}</span>
+                    @if (slot.presence === 'PARTIAL') {
+                      <span class="text-[10px] text-yellow-300">Algunos dias</span>
+                    }
+                    @if (isConflictingSlot(slot.time)) {
+                      <span class="text-[10px] text-red-300">Conflicto</span>
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    [disabled]="slot.occupied"
+                    class="h-8 w-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Eliminar horario"
+                    (click)="removeSlot(slot)"
+                  >
+                    x
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <button
+          type="button"
+          [disabled]="!hasScheduleChanges() || hasScheduleConflicts() || slots.length === 0"
+          class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer self-start disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+          (click)="saveSchedule()"
+        >
+          Guardar horarios
+        </button>
+      </form>
+    }
+  </div>
 </div>
