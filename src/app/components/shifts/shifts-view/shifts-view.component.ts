@@ -145,7 +145,9 @@ export class ShiftsViewComponent implements OnInit {
   }
 
   goToCreateVisit(id: number): void {
-    this.router.navigate(['/visits/create', id]);
+    this.router.navigate(['/visits/create', id], {
+      queryParams: { returnTo: 'shifts' }
+    });
   }
 
 }

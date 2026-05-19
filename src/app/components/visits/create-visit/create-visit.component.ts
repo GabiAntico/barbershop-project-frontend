@@ -20,6 +20,8 @@ export class CreateVisitComponent implements OnInit {
 
   shiftId!: number;
   selectedShift: any = null;
+  returnTo: 'agenda' | 'shifts' = 'shifts';
+  returnDate: string | null = null;
 
   paymentStatuses = [
     { label: 'Pendiente', value: 'PENDING' },
@@ -58,6 +60,8 @@ export class CreateVisitComponent implements OnInit {
     }
 
     this.shiftId = Number(shiftIdParam);
+    this.returnTo = this.route.snapshot.queryParamMap.get('returnTo') === 'agenda' ? 'agenda' : 'shifts';
+    this.returnDate = this.route.snapshot.queryParamMap.get('returnDate');
 
     this.formVisit = this.fb.group({
       totalAmount: [null, [Validators.required, Validators.min(0)]],
@@ -124,11 +128,19 @@ export class CreateVisitComponent implements OnInit {
     const payload = {
       shiftId: this.shiftId,
       ...this.formVisit.value,
+      currency: formValue.currency?.trim() || null,
       paidAt: this.formatLocalDateTime(formValue.paidAt)
     };
 
     this.visitService.postVisit(payload).subscribe({
       next: (response) => {
+        if (this.returnTo === 'agenda') {
+          this.router.navigate(['/agenda'], {
+            queryParams: this.returnDate ? { date: this.returnDate } : undefined
+          });
+          return;
+        }
+
         this.router.navigate(['/shifts-view']);
       },
       error: (err) => {

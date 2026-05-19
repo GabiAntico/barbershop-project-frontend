@@ -37,6 +37,7 @@ export class AppComponent implements OnInit {
     if (this.isActive('/login')) return 'Iniciar sesion';
     if (this.isActive('/register')) return 'Crear cuenta';
     if (this.isActive('/access-denied')) return 'Acceso denegado';
+    if (this.isActive('/dashboard')) return 'Dashboard';
     if (this.isActive('/agenda')) return 'Agenda';
     if (this.isActive('/create-client')) return 'Crear clientes';
     if (this.isActive('/clients-view')) return 'Ver clientes';

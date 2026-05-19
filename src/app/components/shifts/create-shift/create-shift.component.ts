@@ -7,7 +7,7 @@ import { Select } from 'primeng/select';
 import { MessageService, PrimeTemplate } from 'primeng/api';
 import { CreationShiftRequest, TimeSlotAvailabilityResponse } from '../../../models/shift.model';
 import { ShiftService } from '../../../services/shift.service';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { InputText } from 'primeng/inputtext';
 import { SettingsService } from '../../../services/settings.service';
 
@@ -19,7 +19,6 @@ import { SettingsService } from '../../../services/settings.service';
     DatePicker,
     Select,
     PrimeTemplate,
-    RouterLink,
     InputText
   ],
   templateUrl: './create-shift.component.html',
@@ -42,6 +41,8 @@ export class CreateShiftComponent implements OnInit {
   clients: ClientResponse[] = [];
   timeSlots: TimeSlotAvailabilityResponse[] = [];
   loadingTimeSlots = false;
+  returnTo: 'agenda' | 'shifts' = 'shifts';
+  returnDate: string | null = null;
 
   minDate = new Date();
 
@@ -81,6 +82,8 @@ export class CreateShiftComponent implements OnInit {
 
     const dateParam = this.route.snapshot.queryParamMap.get('date');
     const timeParam = this.route.snapshot.queryParamMap.get('time');
+    this.returnTo = this.route.snapshot.queryParamMap.get('returnTo') === 'agenda' ? 'agenda' : 'shifts';
+    this.returnDate = this.route.snapshot.queryParamMap.get('returnDate') ?? dateParam;
 
     if (dateParam) {
       const selectedDate = this.parseDateParam(dateParam);
@@ -131,7 +134,7 @@ export class CreateShiftComponent implements OnInit {
           summary: 'Éxito',
           detail: 'Turno creado correctamente'
         });
-        this.router.navigate(['/shifts-view']);
+        this.navigateBack();
       },
       error: () => {
         this.messageService.add({
@@ -141,6 +144,10 @@ export class CreateShiftComponent implements OnInit {
         })
       }
     })
+  }
+
+  cancel(): void {
+    this.navigateBack();
   }
 
   selectTimeSlot(slot: TimeSlotAvailabilityResponse) {
@@ -200,5 +207,16 @@ export class CreateShiftComponent implements OnInit {
     const [year, month, day] = date.split('-').map(Number);
 
     return new Date(year, month - 1, day);
+  }
+
+  private navigateBack(): void {
+    if (this.returnTo === 'agenda') {
+      this.router.navigate(['/agenda'], {
+        queryParams: this.returnDate ? { date: this.returnDate } : undefined
+      });
+      return;
+    }
+
+    this.router.navigate(['/shifts-view']);
   }
 }

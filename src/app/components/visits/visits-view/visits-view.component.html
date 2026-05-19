@@ -66,6 +66,9 @@
           <th>Estado de pago</th>
           <th pSortableColumn="paidAt">Fecha de pago <p-sortIcon field="paidAt"></p-sortIcon></th>
           <th>Metodo</th>
+          <th class="pr-6 w-[120px]">
+            <div class="flex justify-end">Acciones</div>
+          </th>
         </tr>
       </ng-template>
 
@@ -105,12 +108,21 @@
           <td class="text-slate-100">
             {{ getPaymentMethodLabel(v.paymentMethod) }}
           </td>
+
+          <td class="text-right py-2 pr-6">
+            <button
+              class="h-9 px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer"
+              (click)="editVisit(v.id)"
+            >
+              Editar
+            </button>
+          </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="5" class="py-8 text-center text-slate-300">
+          <td colspan="6" class="py-8 text-center text-slate-300">
             No hay visitas para mostrar.
           </td>
         </tr>

@@ -64,6 +64,10 @@ export class VisitsViewComponent implements OnInit {
     this.router.navigate(['/create-shift']);
   }
 
+  editVisit(id: number): void {
+    this.router.navigate(['/visits/edit', id]);
+  }
+
   getPaymentStatusLabel(status: string): string {
     return this.paymentStatusLabels[status] ?? status ?? '-';
   }

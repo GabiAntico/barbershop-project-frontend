@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { AgendaSlotResponse, ShiftStatus } from '../../../models/shift.model';
 import { ClientResponse } from '../../../models/client.model';
@@ -30,10 +30,16 @@ export class AgendaViewComponent implements OnInit {
   constructor(
     private shiftService: ShiftService,
     private router: Router,
+    private route: ActivatedRoute,
     private messageService: MessageService
   ) { }
 
   ngOnInit() {
+    const dateParam = this.route.snapshot.queryParamMap.get('date');
+    if (dateParam) {
+      this.selectedDate = this.parseDateParam(dateParam);
+    }
+
     this.loadAgenda();
   }
 
@@ -75,7 +81,9 @@ export class AgendaViewComponent implements OnInit {
     this.router.navigate(['/create-shift'], {
       queryParams: {
         date: this.formatDate(this.selectedDate),
-        time: slot.time
+        time: slot.time,
+        returnTo: 'agenda',
+        returnDate: this.formatDate(this.selectedDate)
       }
     });
   }
@@ -85,7 +93,12 @@ export class AgendaViewComponent implements OnInit {
   }
 
   goToCreateVisit(id: number) {
-    this.router.navigate(['/visits/create', id]);
+    this.router.navigate(['/visits/create', id], {
+      queryParams: {
+        returnTo: 'agenda',
+        returnDate: this.formatDate(this.selectedDate)
+      }
+    });
   }
 
   getClientName(client: ClientResponse | null | undefined): string {
@@ -119,5 +132,11 @@ export class AgendaViewComponent implements OnInit {
     const dd = String(date.getDate()).padStart(2, '0');
 
     return `${yyyy}-${MM}-${dd}`;
+  }
+
+  private parseDateParam(date: string): Date {
+    const [year, month, day] = date.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
   }
 }

@@ -1,0 +1,100 @@
+<div class="flex justify-center mt-8 px-4">
+  <div class="w-full max-w-6xl bg-slate-900/60 border border-slate-800 backdrop-blur p-5 rounded-xl shadow-2xl">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5">
+      <div>
+        <h1 class="text-xl font-bold">Dashboard</h1>
+        <p class="text-slate-300 text-sm">Presentismo y recaudacion por periodo.</p>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        @for (option of rangeOptions; track option.value) {
+          <button
+            type="button"
+            class="h-10 px-4 rounded-lg text-sm font-medium cursor-pointer"
+            [class.bg-indigo-500]="selectedRange === option.value"
+            [class.text-white]="selectedRange === option.value"
+            [class.bg-slate-800]="selectedRange !== option.value"
+            [class.text-slate-300]="selectedRange !== option.value"
+            (click)="applyRange(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (selectedRange === 'CUSTOM') {
+      <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mb-5 items-end">
+        <div class="flex flex-col">
+          <label class="text-slate-200 mb-1">Desde</label>
+          <p-date-picker
+            [(ngModel)]="startDate"
+            dateFormat="dd-mm-yy"
+            styleClass="w-full"
+            inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+          ></p-date-picker>
+        </div>
+        <div class="flex flex-col">
+          <label class="text-slate-200 mb-1">Hasta</label>
+          <p-date-picker
+            [(ngModel)]="endDate"
+            dateFormat="dd-mm-yy"
+            styleClass="w-full"
+            inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
+          ></p-date-picker>
+        </div>
+        <button
+          type="button"
+          class="h-10 px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer"
+          (click)="loadDashboard()"
+        >
+          Aplicar
+        </button>
+      </div>
+    }
+
+    @if (loading) {
+      <div class="h-28 rounded-lg border border-slate-800 bg-slate-950/70 flex items-center justify-center text-sm text-slate-400">
+        Cargando dashboard...
+      </div>
+    } @else if (dashboard) {
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
+        <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+          <span class="text-sm text-slate-400">Recaudado</span>
+          <div class="mt-2 text-2xl font-bold text-slate-100">{{ formatMoney(dashboard.revenue.totalPaidAmount) }}</div>
+        </div>
+        <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+          <span class="text-sm text-slate-400">Visitas pagadas</span>
+          <div class="mt-2 text-2xl font-bold text-slate-100">{{ dashboard.revenue.paidVisitsCount }}</div>
+        </div>
+        <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+          <span class="text-sm text-slate-400">Ticket promedio</span>
+          <div class="mt-2 text-2xl font-bold text-slate-100">{{ formatMoney(dashboard.revenue.averageTicket) }}</div>
+        </div>
+        <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+          <span class="text-sm text-slate-400">Presentismo</span>
+          <div class="mt-2 text-2xl font-bold text-slate-100">{{ dashboard.attendance.attendanceRate }}%</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+          <span class="text-sm text-green-300">Completados</span>
+          <div class="mt-2 text-xl font-bold text-green-200">{{ dashboard.attendance.completed }}</div>
+        </div>
+        <div class="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
+          <span class="text-sm text-red-300">Cancelados</span>
+          <div class="mt-2 text-xl font-bold text-red-200">{{ dashboard.attendance.cancelled }}</div>
+        </div>
+        <div class="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
+          <span class="text-sm text-yellow-300">Ausentes</span>
+          <div class="mt-2 text-xl font-bold text-yellow-200">{{ dashboard.attendance.missed }}</div>
+        </div>
+        <div class="rounded-lg border border-slate-700 bg-slate-950/60 p-4">
+          <span class="text-sm text-slate-400">Pendientes futuros</span>
+          <div class="mt-2 text-xl font-bold text-slate-100">{{ dashboard.attendance.futurePending }}</div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
