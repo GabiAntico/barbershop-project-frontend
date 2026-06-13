@@ -35,6 +35,8 @@ export class ChangePasswordComponent implements OnInit {
   }
 
   save(): void {
+    if (this.isSubmitting) return;
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.showError('Completa los datos obligatorios');

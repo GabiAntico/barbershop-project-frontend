@@ -37,6 +37,8 @@ export class RegisterComponent implements OnInit {
   }
 
   register(): void {
+    if (this.isSubmitting) return;
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.messageService.add({

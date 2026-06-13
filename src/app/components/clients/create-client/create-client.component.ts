@@ -5,6 +5,7 @@ import { CreationClientRequest } from '../../../models/client.model';
 import { ClientService } from '../../../services/client.service';
 import {Router, RouterLink} from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-create-client',
@@ -20,13 +21,14 @@ import { MessageService } from 'primeng/api';
 export class CreateClientComponent implements OnInit {
 
   form!: FormGroup;
+  isSaving = false;
 
   constructor(private fb: FormBuilder, private clientService: ClientService, private router: Router, private messageService: MessageService) { }
 
   ngOnInit() {
     this.form = this.fb.group({
       email: ['', [Validators.email]],
-      phoneNumber: ['', [Validators.required]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
       firstName: [''],
       lastName: [''],
       documentNumber: [''],
@@ -35,6 +37,7 @@ export class CreateClientComponent implements OnInit {
   }
 
   postClient(form: FormGroup) {
+    if (this.isSaving) return;
 
     if (form.invalid) {
       form.markAllAsTouched();
@@ -54,7 +57,11 @@ export class CreateClientComponent implements OnInit {
       documentNumber: this.emptyToNull(form.controls['documentNumber'].value),
       notes: this.emptyToNull(form.controls['notes'].value)
     }
-    this.clientService.postClient(client).subscribe({
+
+    this.isSaving = true;
+    this.clientService.postClient(client).pipe(
+      finalize(() => this.isSaving = false)
+    ).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
@@ -63,15 +70,32 @@ export class CreateClientComponent implements OnInit {
         });
         this.router.navigate(['/clients-view']);
       },
-      error: () => {
+      error: error => {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: "Error al crear el cliente"
+          detail: this.getSaveErrorMessage(error, 'Error al crear el cliente')
         })
       }
     });
   }
+
+  private getSaveErrorMessage(error: any, fallback: string): string {
+    const backendMessage = error?.error?.message || error?.error?.detail || '';
+    const rawError = typeof error?.error === 'string' ? error.error : JSON.stringify(error?.error ?? {});
+    const normalizedMessage = String(`${backendMessage} ${rawError} ${error?.message ?? ''}`).toLowerCase();
+
+    if (error?.status === 409 || normalizedMessage.includes('phone number already exists')) {
+      return 'El cliente ya existe';
+    }
+
+    if (normalizedMessage.includes('invalid phone number')) {
+      return 'El telefono debe tener entre 8 y 15 numeros, sin espacios ni simbolos';
+    }
+
+    return backendMessage || fallback;
+  }
+
   private emptyToNull(value: unknown): string | null {
     if (typeof value !== 'string') return null;
 

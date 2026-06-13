@@ -9,7 +9,7 @@ import { ShiftService } from '../../../services/shift.service';
 import { ClientService } from '../../../services/client.service';
 import { ShiftResponse } from '../../../models/shift.model';
 import { ClientResponse } from '../../../models/client.model';
-import { map, switchMap } from 'rxjs';
+import { finalize, map, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-edit-visit',
@@ -25,6 +25,7 @@ export class EditVisitComponent implements OnInit {
   visit: VisitResponse | null = null;
   selectedShift: (ShiftResponse & { client?: ClientResponse }) | null = null;
   errorMessage: string | null = null;
+  isSaving = false;
 
   paymentStatuses = [
     { label: 'Pendiente', value: 'PENDING' },
@@ -115,6 +116,8 @@ export class EditVisitComponent implements OnInit {
   }
 
   putVisit(): void {
+    if (this.isSaving) return;
+
     this.errorMessage = null;
 
     if (this.formVisit.invalid) {
@@ -133,7 +136,10 @@ export class EditVisitComponent implements OnInit {
       paymentMethod: formValue.paymentMethod
     };
 
-    this.visitService.putVisit(this.visitId, payload).subscribe({
+    this.isSaving = true;
+    this.visitService.putVisit(this.visitId, payload).pipe(
+      finalize(() => this.isSaving = false)
+    ).subscribe({
       next: () => this.router.navigate(['/visits-view']),
       error: err => {
         console.error(err);

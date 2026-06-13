@@ -8,6 +8,7 @@ import { SettingsService } from '../../../services/settings.service';
 import { ScheduleSlot, ScheduleSettingsRequest } from '../../../models/settings.model';
 import { WorkContextService } from '../../../services/work-context.service';
 import { Branch, Employee, WorkContext } from '../../../models/work-context.model';
+import { finalize } from 'rxjs';
 
 type SettingsTab = 'amount' | 'schedule' | 'branches' | 'employees';
 type ScheduleMode = 'DATE' | 'RANGE' | 'DEFAULT';
@@ -45,6 +46,11 @@ export class SettingsViewComponent implements OnInit {
   savedScheduleSlots: string[] = [];
   newSlotTime: Date | null = null;
   loadingSchedule = false;
+  savingSettings = false;
+  savingSchedule = false;
+  creatingBranch = false;
+  creatingEmployee = false;
+  savingEmployeeBranches = false;
   minScheduleDate = new Date();
 
   constructor(
@@ -106,6 +112,8 @@ export class SettingsViewComponent implements OnInit {
   }
 
   saveSettings(form: FormGroup) {
+    if (this.savingSettings) return;
+
     if (form.invalid) {
       form.markAllAsTouched();
       this.showError('Formulario invalido');
@@ -114,9 +122,12 @@ export class SettingsViewComponent implements OnInit {
 
     const amount = form.get('defaultEstimatedAmount')!.value;
 
+    this.savingSettings = true;
     this.settingsService.putSettings({
       defaultEstimatedAmount: amount === null || amount === '' ? 0 : Number(amount)
-    }).subscribe({
+    }).pipe(
+      finalize(() => this.savingSettings = false)
+    ).subscribe({
       next: settings => {
         this.savedDefaultEstimatedAmount = settings.defaultEstimatedAmount ?? 0;
         this.amountForm.patchValue({
@@ -156,13 +167,18 @@ export class SettingsViewComponent implements OnInit {
   }
 
   createBranch(): void {
+    if (this.creatingBranch) return;
+
     if (this.branchForm.invalid) {
       this.branchForm.markAllAsTouched();
       this.showError('Completa el nombre de la sucursal');
       return;
     }
 
-    this.workContextService.createBranch(this.branchForm.value).subscribe({
+    this.creatingBranch = true;
+    this.workContextService.createBranch(this.branchForm.value).pipe(
+      finalize(() => this.creatingBranch = false)
+    ).subscribe({
       next: branch => {
         this.branches = [...this.branches, branch];
         this.branchForm.reset();
@@ -189,13 +205,18 @@ export class SettingsViewComponent implements OnInit {
   }
 
   createEmployee(): void {
+    if (this.creatingEmployee) return;
+
     if (this.employeeForm.invalid || this.employeeForm.value.branchIds.length === 0) {
       this.employeeForm.markAllAsTouched();
       this.showError('Completa email, contraseña temporal y al menos una sucursal');
       return;
     }
 
-    this.workContextService.createEmployee(this.employeeForm.value).subscribe({
+    this.creatingEmployee = true;
+    this.workContextService.createEmployee(this.employeeForm.value).pipe(
+      finalize(() => this.creatingEmployee = false)
+    ).subscribe({
       next: employee => {
         this.employees = [...this.employees, employee];
         this.employeeForm.reset({ displayName: '', email: '', temporaryPassword: '', branchIds: [] });
@@ -218,6 +239,7 @@ export class SettingsViewComponent implements OnInit {
   }
 
   saveEmployeeBranches(): void {
+    if (this.savingEmployeeBranches) return;
     if (!this.selectedEmployee) return;
 
     const branchIds = this.employeeBranchesForm.get('branchIds')!.value ?? [];
@@ -226,7 +248,10 @@ export class SettingsViewComponent implements OnInit {
       return;
     }
 
-    this.workContextService.updateEmployeeBranches(this.selectedEmployee.id, { branchIds }).subscribe({
+    this.savingEmployeeBranches = true;
+    this.workContextService.updateEmployeeBranches(this.selectedEmployee.id, { branchIds }).pipe(
+      finalize(() => this.savingEmployeeBranches = false)
+    ).subscribe({
       next: employee => {
         this.employees = this.employees.map(item => item.id === employee.id ? employee : item);
         this.selectEmployee(employee);
@@ -338,6 +363,8 @@ export class SettingsViewComponent implements OnInit {
   }
 
   saveSchedule() {
+    if (this.savingSchedule) return;
+
     if (this.scheduleMode === 'RANGE' && !this.hasCompleteRange()) {
       this.showError('Selecciona una fecha de inicio y una fecha de fin');
       return;
@@ -367,7 +394,10 @@ export class SettingsViewComponent implements OnInit {
       payload.endDate = this.formatControlDate(this.scheduleForm.get('endDate')!.value);
     }
 
-    this.settingsService.putSchedule(payload).subscribe({
+    this.savingSchedule = true;
+    this.settingsService.putSchedule(payload).pipe(
+      finalize(() => this.savingSchedule = false)
+    ).subscribe({
       next: schedule => {
         this.slots = schedule.slots;
         this.savedScheduleSlots = this.getSlotTimes(this.slots);

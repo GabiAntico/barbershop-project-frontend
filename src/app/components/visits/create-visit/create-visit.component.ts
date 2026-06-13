@@ -4,7 +4,7 @@ import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import { Select } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
 import {ShiftService} from '../../../services/shift.service';
-import {map, switchMap, take} from 'rxjs';
+import { finalize, map, switchMap } from 'rxjs';
 import {ClientService} from '../../../services/client.service';
 import {VisitService} from '../../../services/visit.service';
 
@@ -22,6 +22,7 @@ export class CreateVisitComponent implements OnInit {
   selectedShift: any = null;
   returnTo: 'agenda' | 'shifts' = 'shifts';
   returnDate: string | null = null;
+  isSaving = false;
 
   paymentStatuses = [
     { label: 'Pendiente', value: 'PENDING' },
@@ -118,6 +119,8 @@ export class CreateVisitComponent implements OnInit {
   }
 
   postVisit(): void {
+    if (this.isSaving) return;
+
     if (this.formVisit.invalid) {
       this.formVisit.markAllAsTouched();
       return;
@@ -132,7 +135,10 @@ export class CreateVisitComponent implements OnInit {
       paidAt: this.formatLocalDateTime(formValue.paidAt)
     };
 
-    this.visitService.postVisit(payload).subscribe({
+    this.isSaving = true;
+    this.visitService.postVisit(payload).pipe(
+      finalize(() => this.isSaving = false)
+    ).subscribe({
       next: (response) => {
         if (this.returnTo === 'agenda') {
           this.router.navigate(['/agenda'], {

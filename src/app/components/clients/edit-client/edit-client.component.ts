@@ -5,6 +5,7 @@ import {ClientService} from '../../../services/client.service';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {ClientResponse, ClientRequest} from '../../../models/client.model';
 import {MessageService} from 'primeng/api';
+import { finalize } from 'rxjs';
 
 
 @Component({
@@ -21,6 +22,7 @@ import {MessageService} from 'primeng/api';
 export class EditClientComponent implements OnInit {
 
   form!: FormGroup;
+  isSaving = false;
 
   constructor(private fb: FormBuilder,
               private clientService: ClientService,
@@ -35,7 +37,7 @@ export class EditClientComponent implements OnInit {
       lastName: [''],
       documentNumber: [''],
       email: ['', [Validators.email]],
-      phoneNumber: ['', [Validators.required]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
       notes: ['']
     });
 
@@ -59,6 +61,7 @@ export class EditClientComponent implements OnInit {
   }
 
   putClient(form: FormGroup) {
+    if (this.isSaving) return;
 
     if (form.invalid) {
       form.markAllAsTouched();
@@ -91,7 +94,10 @@ export class EditClientComponent implements OnInit {
       notes: emptyToNull(form.get('notes')?.value)
     };
 
-    this.clientService.putClient(clientRequest).subscribe({
+    this.isSaving = true;
+    this.clientService.putClient(clientRequest).pipe(
+      finalize(() => this.isSaving = false)
+    ).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
@@ -104,9 +110,25 @@ export class EditClientComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: "Error al editar el cliente"
+          detail: this.getSaveErrorMessage(err, 'Error al editar el cliente')
         })
       }
     });
+  }
+
+  private getSaveErrorMessage(error: any, fallback: string): string {
+    const backendMessage = error?.error?.message || error?.error?.detail || '';
+    const rawError = typeof error?.error === 'string' ? error.error : JSON.stringify(error?.error ?? {});
+    const normalizedMessage = String(`${backendMessage} ${rawError} ${error?.message ?? ''}`).toLowerCase();
+
+    if (error?.status === 409 || normalizedMessage.includes('phone number already exists')) {
+      return 'El cliente ya existe';
+    }
+
+    if (normalizedMessage.includes('invalid phone number')) {
+      return 'El telefono debe tener entre 8 y 15 numeros, sin espacios ni simbolos';
+    }
+
+    return backendMessage || fallback;
   }
 }

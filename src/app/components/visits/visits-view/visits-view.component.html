@@ -1,23 +1,23 @@
 <div class="flex justify-center mt-6 sm:mt-12 px-0 sm:px-4">
   <div class="w-full max-w-5xl bg-slate-900/60 border border-slate-800 backdrop-blur p-3 sm:p-5 rounded-xl shadow-2xl">
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <div class="visits-view-header flex flex-col gap-3 mb-4">
       <div>
         <h1 class="text-xl font-bold">Visitas</h1>
         <p class="text-slate-300 text-sm">Consulta las visitas registradas, sus pagos y el turno asociado.</p>
       </div>
 
-      <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+      <div class="visits-toolbar-actions flex flex-col gap-2">
         <button
           type="button"
-          class="h-10 w-full sm:w-auto px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
+          class="visits-toolbar-button h-10 w-full px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
           (click)="resetFilters(dt)">
           Orden por defecto
         </button>
 
         <button
           type="button"
-          class="h-10 w-full sm:w-auto px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer"
+          class="visits-toolbar-button h-10 w-full px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer"
           (click)="goToCreateShift()">
           + Nuevo turno
         </button>
@@ -32,7 +32,7 @@
         type="text"
         class="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
         placeholder="Cliente, empleado, estado, metodo o moneda..."
-        (input)="dt.filterGlobal(search.value, 'contains')"
+        (input)="onSearch(search.value, dt)"
       />
     </div>
 
@@ -50,6 +50,7 @@
 
     <p-table
       #dt
+      class="visits-desktop-table"
       [value]="visits"
       [paginator]="true"
       [rows]="8"
@@ -134,6 +135,101 @@
         </tr>
       </ng-template>
     </p-table>
+
+    <div class="visits-mobile-list space-y-3">
+      @if (mobileVisits.length > 0) {
+        @for (v of mobileVisits; track v.id) {
+          <article class="rounded-xl border border-slate-800 bg-slate-950/45 p-4 shadow-lg">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs text-slate-400">Cliente</p>
+                <h2 class="mt-1 text-base font-semibold text-slate-100 truncate">
+                  {{ getClientPrimary(v.client) }}
+                </h2>
+              </div>
+
+              <span
+                class="shrink-0 px-3 py-1 text-xs font-medium rounded-full"
+                [ngClass]="{
+                  'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30': v.paymentStatus === 'PENDING',
+                  'bg-green-500/20 text-green-400 border border-green-500/30': v.paymentStatus === 'PAID',
+                  'bg-blue-500/20 text-blue-400 border border-blue-500/30': v.paymentStatus === 'PARTIAL',
+                  'bg-red-500/20 text-red-400 border border-red-500/30': v.paymentStatus === 'REFUNDED',
+                  'bg-violet-500/20 text-violet-400 border border-violet-500/30': v.paymentStatus === 'BONIFIED'
+                }"
+              >
+                {{ getPaymentStatusLabel(v.paymentStatus) }}
+              </span>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
+                <p class="text-xs text-slate-400">Atendido por</p>
+                <p class="mt-1 text-slate-100 font-medium truncate">{{ getAttendedByLabel(v) }}</p>
+              </div>
+
+              <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
+                <p class="text-xs text-slate-400">Monto</p>
+                <p class="mt-1 text-slate-100 font-medium truncate">{{ v.currency || '-' }} {{ v.totalAmount }}</p>
+              </div>
+
+              <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
+                <p class="text-xs text-slate-400">Fecha de pago</p>
+                <p class="mt-1 text-slate-100 font-medium truncate">
+                  {{ v.paidAt ? (v.paidAt.includes('T') ? v.paidAt.split('T')[0] : v.paidAt.split(' ')[0]) : '-' }}
+                </p>
+              </div>
+
+              <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
+                <p class="text-xs text-slate-400">Metodo</p>
+                <p class="mt-1 text-slate-100 font-medium truncate">{{ getPaymentMethodLabel(v.paymentMethod) }}</p>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <button
+                type="button"
+                class="h-10 w-full rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer"
+                (click)="editVisit(v.id)">
+                Editar
+              </button>
+            </div>
+          </article>
+        }
+
+        <div class="flex items-center justify-between gap-3 pt-2 text-sm text-slate-300">
+          <span>
+            Mostrando {{ mobileFirstRecord }} a {{ mobileLastRecord }} de {{ filteredVisits.length }} visitas
+          </span>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              [disabled]="mobilePage === 0"
+              class="h-9 w-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:bg-slate-900 disabled:text-slate-600 disabled:cursor-not-allowed"
+              (click)="previousMobilePage()">
+              <
+            </button>
+
+            <span class="h-9 min-w-9 px-3 rounded-lg bg-teal-900/50 text-slate-100 flex items-center justify-center">
+              {{ mobilePage + 1 }}
+            </span>
+
+            <button
+              type="button"
+              [disabled]="mobilePage >= mobileTotalPages - 1"
+              class="h-9 w-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:bg-slate-900 disabled:text-slate-600 disabled:cursor-not-allowed"
+              (click)="nextMobilePage()">
+              >
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="rounded-xl border border-slate-800 bg-slate-950/45 p-6 text-center text-slate-300">
+          No hay visitas para mostrar.
+        </div>
+      }
+    </div>
 
   </div>
 </div>

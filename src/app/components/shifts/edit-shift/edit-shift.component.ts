@@ -9,6 +9,7 @@ import {DatePicker} from 'primeng/datepicker';
 import {Select} from 'primeng/select';
 import {CreationShiftRequest, ShiftResponse, ShiftStatus, TimeSlotAvailabilityResponse} from '../../../models/shift.model';
 import {InputText} from 'primeng/inputtext';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-edit-shift',
@@ -37,6 +38,7 @@ export class EditShiftComponent implements OnInit {
   clients: ClientResponse[] = [];
   timeSlots: TimeSlotAvailabilityResponse[] = [];
   loadingTimeSlots = false;
+  isSaving = false;
   shiftId!: number;
   originalShiftDate: string | null = null;
   originalShiftTime: string | null = null;
@@ -97,6 +99,8 @@ export class EditShiftComponent implements OnInit {
   }
 
   putShift(form: FormGroup) {
+    if (this.isSaving) return;
+
     if (form.invalid) {
       form.markAllAsTouched();
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Formulario invalido' });
@@ -134,7 +138,10 @@ export class EditShiftComponent implements OnInit {
       estimatedAmount: estimatedAmount === null || estimatedAmount === '' ? null : Number(estimatedAmount)
     };
 
-    this.shiftService.putShift(id, shiftRequest).subscribe({
+    this.isSaving = true;
+    this.shiftService.putShift(id, shiftRequest).pipe(
+      finalize(() => this.isSaving = false)
+    ).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
@@ -154,6 +161,7 @@ export class EditShiftComponent implements OnInit {
   }
 
   selectTimeSlot(slot: TimeSlotAvailabilityResponse) {
+    if (this.isSaving) return;
     if (!slot.available) return;
 
     this.formShift.get('time')!.setValue(slot.time);

@@ -22,6 +22,9 @@ export class VisitsViewComponent implements OnInit {
 
   visits: VisitResponse[] = [];
   private originalSorted: VisitResponse[] = [];
+  searchTerm = '';
+  mobilePage = 0;
+  readonly mobileRows = 8;
 
   selectedPaymentStatusFilter: PaymentStatusFilter = 'ALL';
   private lastPaymentStatus: PaymentStatusFilter = 'ALL';
@@ -92,6 +95,63 @@ export class VisitsViewComponent implements OnInit {
     return fullName ? `${fullName} - ${client.phoneNumber}` : contact || '-';
   }
 
+  getClientPrimary(client: ClientResponse | null): string {
+    if (!client) return '-';
+
+    return [client.firstName, client.lastName].filter(Boolean).join(' ')
+      || client.phoneNumber
+      || client.email
+      || '-';
+  }
+
+  get filteredVisits(): VisitResponse[] {
+    const term = this.searchTerm.trim().toLowerCase();
+
+    if (!term) return this.visits;
+
+    return this.visits.filter(visit => [
+      this.getClientLabel(visit.client),
+      this.getAttendedByLabel(visit),
+      visit.currency,
+      this.getPaymentStatusLabel(visit.paymentStatus),
+      visit.paymentStatus,
+      this.getPaymentMethodLabel(visit.paymentMethod),
+      visit.paymentMethod
+    ].some(value => (value || '').toLowerCase().includes(term)));
+  }
+
+  get mobileVisits(): VisitResponse[] {
+    const start = this.mobilePage * this.mobileRows;
+
+    return this.filteredVisits.slice(start, start + this.mobileRows);
+  }
+
+  get mobileTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredVisits.length / this.mobileRows));
+  }
+
+  get mobileFirstRecord(): number {
+    return this.filteredVisits.length === 0 ? 0 : (this.mobilePage * this.mobileRows) + 1;
+  }
+
+  get mobileLastRecord(): number {
+    return Math.min((this.mobilePage + 1) * this.mobileRows, this.filteredVisits.length);
+  }
+
+  onSearch(value: string, table: any): void {
+    this.searchTerm = value;
+    this.mobilePage = 0;
+    table.filterGlobal(value, 'contains');
+  }
+
+  previousMobilePage(): void {
+    this.mobilePage = Math.max(0, this.mobilePage - 1);
+  }
+
+  nextMobilePage(): void {
+    this.mobilePage = Math.min(this.mobileTotalPages - 1, this.mobilePage + 1);
+  }
+
   onPaymentStatusChange(event: any): void {
     const value: PaymentStatusFilter | null = event?.value ?? null;
 
@@ -121,10 +181,12 @@ export class VisitsViewComponent implements OnInit {
   private applyPaymentStatusFilter(): void {
     if (this.selectedPaymentStatusFilter === 'ALL') {
       this.visits = [...this.originalSorted];
+      this.mobilePage = 0;
       return;
     }
 
     this.visits = this.originalSorted.filter(v => v.paymentStatus === this.selectedPaymentStatusFilter);
+    this.mobilePage = 0;
   }
 
   private parseDate(datetime: string | null): number {

@@ -6,6 +6,7 @@ import {CreateShiftComponent} from './components/shifts/create-shift/create-shif
 import {ShiftsViewComponent} from './components/shifts/shifts-view/shifts-view.component';
 import {EditClientComponent} from './components/clients/edit-client/edit-client.component';
 import {EditShiftComponent} from './components/shifts/edit-shift/edit-shift.component';
+import {ShiftDetailComponent} from './components/shifts/shift-detail/shift-detail.component';
 import {CreateVisitComponent} from './components/visits/create-visit/create-visit.component';
 import {EditVisitComponent} from './components/visits/edit-visit/edit-visit.component';
 import {VisitsViewComponent} from './components/visits/visits-view/visits-view.component';
@@ -61,6 +62,9 @@ export const routes: Routes = [
   },
   {
     path: 'shifts-view', component: ShiftsViewComponent, canActivate: [authGuard]
+  },
+  {
+    path: 'shifts/:id', component: ShiftDetailComponent, canActivate: [authGuard]
   },
   {
     path: 'edit-shift/:id', component: EditShiftComponent, canActivate: [authGuard]

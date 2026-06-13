@@ -92,7 +92,7 @@
         class="h-10 w-full sm:w-auto px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         [disabled]="isSubmitting"
       >
-        Registrarme
+        {{ isSubmitting ? 'Creando...' : 'Registrarme' }}
       </button>
 
       <button

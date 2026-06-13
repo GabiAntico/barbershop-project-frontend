@@ -10,6 +10,7 @@ import { ShiftService } from '../../../services/shift.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputText } from 'primeng/inputtext';
 import { SettingsService } from '../../../services/settings.service';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-create-shift',
@@ -41,6 +42,7 @@ export class CreateShiftComponent implements OnInit {
   clients: ClientResponse[] = [];
   timeSlots: TimeSlotAvailabilityResponse[] = [];
   loadingTimeSlots = false;
+  isSaving = false;
   returnTo: 'agenda' | 'shifts' = 'shifts';
   returnDate: string | null = null;
 
@@ -95,6 +97,8 @@ export class CreateShiftComponent implements OnInit {
 
 
   postShift(form: FormGroup) {
+    if (this.isSaving) return;
+
     if (form.invalid) {
       this.messageService.add({
         severity: 'error',
@@ -127,7 +131,10 @@ export class CreateShiftComponent implements OnInit {
       estimatedAmount: estimatedAmount === null || estimatedAmount === '' ? null : Number(estimatedAmount)
     }
 
-    this.shiftService.postShift(shiftRequest).subscribe({
+    this.isSaving = true;
+    this.shiftService.postShift(shiftRequest).pipe(
+      finalize(() => this.isSaving = false)
+    ).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
@@ -151,6 +158,7 @@ export class CreateShiftComponent implements OnInit {
   }
 
   selectTimeSlot(slot: TimeSlotAvailabilityResponse) {
+    if (this.isSaving) return;
     if (!slot.available) return;
 
     this.formShift.get('time')!.setValue(slot.time);

@@ -22,6 +22,9 @@ import { InputText } from 'primeng/inputtext';
 export class ClientsViewComponent implements OnInit {
 
   clients: ClientResponse[] = [];
+  searchTerm = '';
+  mobilePage = 0;
+  readonly mobileRows = 8;
 
   selectedClientId: number = 0;
 
@@ -47,6 +50,58 @@ export class ClientsViewComponent implements OnInit {
 
   getClientName(client: ClientResponse): string {
     return [client.firstName, client.lastName].filter(Boolean).join(' ') || '—';
+  }
+
+  getClientPrimary(client: ClientResponse): string {
+    return [client.firstName, client.lastName].filter(Boolean).join(' ')
+      || client.phoneNumber
+      || client.email
+      || '-';
+  }
+
+  get filteredClients(): ClientResponse[] {
+    const term = this.searchTerm.trim().toLowerCase();
+
+    if (!term) return this.clients;
+
+    return this.clients.filter(client => [
+      client.firstName,
+      client.lastName,
+      client.email,
+      client.phoneNumber
+    ].some(value => (value || '').toLowerCase().includes(term)));
+  }
+
+  get mobileClients(): ClientResponse[] {
+    const start = this.mobilePage * this.mobileRows;
+
+    return this.filteredClients.slice(start, start + this.mobileRows);
+  }
+
+  get mobileTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredClients.length / this.mobileRows));
+  }
+
+  get mobileFirstRecord(): number {
+    return this.filteredClients.length === 0 ? 0 : (this.mobilePage * this.mobileRows) + 1;
+  }
+
+  get mobileLastRecord(): number {
+    return Math.min((this.mobilePage + 1) * this.mobileRows, this.filteredClients.length);
+  }
+
+  onSearch(value: string, table: any): void {
+    this.searchTerm = value;
+    this.mobilePage = 0;
+    table.filterGlobal(value, 'contains');
+  }
+
+  previousMobilePage(): void {
+    this.mobilePage = Math.max(0, this.mobilePage - 1);
+  }
+
+  nextMobilePage(): void {
+    this.mobilePage = Math.min(this.mobileTotalPages - 1, this.mobilePage + 1);
   }
 
   editClient(id: number){

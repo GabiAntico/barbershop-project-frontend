@@ -23,6 +23,8 @@ export class ShiftsViewComponent implements OnInit {
 
   shifts: ShiftCompleteResponse[] = [];
   private originalSorted: ShiftCompleteResponse[] = [];
+  mobilePage = 0;
+  readonly mobileRows = 8;
 
   selectedStatusFilter: StatusFilter = 'ALL';
   private lastStatus: StatusFilter = 'ALL';
@@ -52,6 +54,32 @@ export class ShiftsViewComponent implements OnInit {
     return fullName || '—';
   }
 
+  getClientPrimary(client: ClientResponse | null | undefined): string {
+    if (!client) return '-';
+
+    const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
+
+    return fullName || client.phoneNumber || client.email || '-';
+  }
+
+  get mobileShifts(): ShiftCompleteResponse[] {
+    const start = this.mobilePage * this.mobileRows;
+
+    return this.shifts.slice(start, start + this.mobileRows);
+  }
+
+  get mobileTotalPages(): number {
+    return Math.max(1, Math.ceil(this.shifts.length / this.mobileRows));
+  }
+
+  get mobileFirstRecord(): number {
+    return this.shifts.length === 0 ? 0 : (this.mobilePage * this.mobileRows) + 1;
+  }
+
+  get mobileLastRecord(): number {
+    return Math.min((this.mobilePage + 1) * this.mobileRows, this.shifts.length);
+  }
+
   constructor(private shiftService: ShiftService, private router: Router) {}
 
   ngOnInit(): void {
@@ -71,6 +99,10 @@ export class ShiftsViewComponent implements OnInit {
 
   editShift(id: number): void {
     this.router.navigate(['/edit-shift', id]);
+  }
+
+  viewShift(id: number): void {
+    this.router.navigate(['/shifts', id]);
   }
 
   // ------------------- SelectButton (filtro) -------------------
@@ -97,9 +129,11 @@ export class ShiftsViewComponent implements OnInit {
   private applyStatusFilter(): void {
     if (this.selectedStatusFilter === 'ALL') {
       this.shifts = [...this.originalSorted];
+      this.mobilePage = 0;
       return;
     }
     this.shifts = this.originalSorted.filter(s => s.status === this.selectedStatusFilter);
+    this.mobilePage = 0;
   }
 
   resetSmartSort(table: any): void {
@@ -110,6 +144,14 @@ export class ShiftsViewComponent implements OnInit {
     table.sortField = null;
     table.sortOrder = 0;
     table.clear();
+  }
+
+  previousMobilePage(): void {
+    this.mobilePage = Math.max(0, this.mobilePage - 1);
+  }
+
+  nextMobilePage(): void {
+    this.mobilePage = Math.min(this.mobileTotalPages - 1, this.mobilePage + 1);
   }
 
   private parseShiftDate(datetime: string): number {
@@ -324,13 +366,13 @@ endstream`);
     return chunks.length ? chunks : [[]];
   }
 
-  private formatShiftDate(datetime: string): string {
+  formatShiftDate(datetime: string): string {
     if (!datetime) return '-';
 
     return datetime.includes('T') ? datetime.split('T')[0] : datetime.split(' ')[0];
   }
 
-  private formatShiftTime(datetime: string): string {
+  formatShiftTime(datetime: string): string {
     if (!datetime) return '-';
 
     return datetime.includes('T')
@@ -344,7 +386,7 @@ endstream`);
     return name !== 'â€”' ? name : client?.phoneNumber || client?.email || '-';
   }
 
-  private formatAmount(amount: number | null | undefined): string {
+  formatAmount(amount: number | null | undefined): string {
     if (amount === null || amount === undefined) return '-';
 
     return `$ ${Number(amount).toFixed(2)}`;

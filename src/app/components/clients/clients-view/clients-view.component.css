@@ -1,3 +1,22 @@
+/* ===== View-specific responsive behavior ===== */
+.clients-desktop-table {
+  display: block;
+}
+
+.clients-mobile-list {
+  display: none;
+}
+
+@media (max-width: 827px) {
+  .clients-desktop-table {
+    display: none !important;
+  }
+
+  .clients-mobile-list {
+    display: block;
+  }
+}
+
 /* Fondo general del datatable */
 :host ::ng-deep .p-datatable,
 :host ::ng-deep .p-datatable .p-datatable-table-container,

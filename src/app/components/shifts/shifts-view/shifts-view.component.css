@@ -1,3 +1,53 @@
+/* ===== View-specific responsive behavior ===== */
+.shifts-view-header {
+  display: flex;
+  flex-direction: column;
+}
+
+.shifts-toolbar-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.shifts-toolbar-button {
+  white-space: nowrap;
+}
+
+.shifts-desktop-table {
+  display: block;
+}
+
+.shifts-mobile-list {
+  display: none;
+}
+
+@media (min-width: 828px) {
+  .shifts-view-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .shifts-toolbar-actions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .shifts-toolbar-button {
+    width: auto;
+  }
+}
+
+@media (max-width: 827px) {
+  .shifts-desktop-table {
+    display: none !important;
+  }
+
+  .shifts-mobile-list {
+    display: block;
+  }
+}
+
 /* Fondo general del datatable */
 :host ::ng-deep .p-datatable,
 :host ::ng-deep .p-datatable .p-datatable-table-container,
