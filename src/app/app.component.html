@@ -2,7 +2,7 @@
 <div class="min-h-screen text-slate-100">
 
   <!-- Topbar minima -->
-  <header class="sticky top-0 z-20 flex items-center gap-3 px-3 sm:px-4 py-3 border-b border-slate-800 bg-slate-950/70 backdrop-blur">
+  <header class="app-topbar sticky top-0 z-20 flex items-center gap-3 px-3 sm:px-4 py-3 border-b border-slate-800 bg-slate-950/70 backdrop-blur">
     <!-- Boton hamburguesa -->
     <button
       type="button"
@@ -13,11 +13,11 @@
       &#9776;
     </button>
 
-    <div class="font-semibold tracking-tight truncate">Turnos</div>
+    <div class="app-topbar-title font-semibold tracking-tight truncate">Turnos</div>
 
     @if (isLoggedIn() && context && context.branches.length > 0) {
       <p-select
-        class="ml-auto w-44 sm:w-56 shrink-0"
+        class="app-branch-select ml-auto w-44 sm:w-56 shrink-0"
         styleClass="w-full h-9 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400"
         [(ngModel)]="selectedBranchId"
         (ngModelChange)="onBranchSelected($event)"
@@ -29,7 +29,7 @@
     }
 
     <!-- Seccion actual -->
-    <div class="text-sm text-slate-400 truncate text-right" [class.ml-auto]="!isLoggedIn() || !context || context.branches.length === 0">
+    <div class="app-section-label text-sm text-slate-400 truncate text-right" [class.ml-auto]="!isLoggedIn() || !context || context.branches.length === 0">
       {{ getCurrentSectionLabel() }}
     </div>
   </header>
@@ -45,7 +45,7 @@
   <!-- Sidebar Drawer -->
   <aside
     class="fixed top-0 left-0 z-40 h-full w-[86vw] max-w-72 bg-slate-900 border-r border-slate-800
-           transform transition-transform duration-200 ease-out"
+           transform transition-transform duration-200 ease-out flex flex-col"
     [ngClass]="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
   >
     <!-- Header sidebar -->
@@ -63,7 +63,7 @@
     </div>
 
     <!-- Opciones -->
-    <nav class="p-2 space-y-4 overflow-y-auto pb-24 h-[calc(100%-73px)]">
+    <nav class="flex-1 min-h-0 p-2 space-y-4 overflow-y-auto">
       <section>
         <div class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
           Cuenta
@@ -233,7 +233,7 @@
     </nav>
 
     <!-- Footer sidebar -->
-    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800 text-xs text-slate-400">
+    <div class="shrink-0 p-4 border-t border-slate-800 text-xs text-slate-400">
       Shifts Frontend
     </div>
   </aside>
