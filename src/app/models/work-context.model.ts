@@ -36,3 +36,30 @@ export interface CreateEmployeeRequest {
 export interface UpdateEmployeeBranchesRequest {
   branchIds: number[];
 }
+
+export type EmployeeScheduleDayName =
+  'MONDAY'
+  | 'TUESDAY'
+  | 'WEDNESDAY'
+  | 'THURSDAY'
+  | 'FRIDAY'
+  | 'SATURDAY'
+  | 'SUNDAY';
+
+export interface EmployeeScheduleDay {
+  dayOfWeek: EmployeeScheduleDayName;
+  enabled: boolean;
+  startTime: string;
+  endTime: string;
+}
+
+export interface EmployeeSchedule {
+  employeeId: number;
+  branchId: number;
+  days: EmployeeScheduleDay[];
+}
+
+export interface EmployeeScheduleRequest {
+  branchId: number;
+  days: EmployeeScheduleDay[];
+}

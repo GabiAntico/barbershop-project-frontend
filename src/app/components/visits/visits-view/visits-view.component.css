@@ -21,6 +21,14 @@
   display: none;
 }
 
+.status-filter {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+}
+
 @media (min-width: 921px) {
   .visits-view-header {
     flex-direction: row;
@@ -45,12 +53,6 @@
 
   .visits-mobile-list {
     display: block;
-  }
-}
-
-@media (max-width: 640px) {
-  :host ::ng-deep .status-filter .p-selectbutton {
-    flex-wrap: wrap;
   }
 }
 
@@ -93,12 +95,21 @@
 
 /* ===== Status filter (SelectButton) ===== */
 :host ::ng-deep .status-filter .p-selectbutton {
-  display: inline-flex;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible;
   gap: 6px;
   padding: 6px;
   border-radius: 14px;
   background: rgba(2, 6, 23, 0.55) !important;
   border: 1px solid rgba(51, 65, 85, 0.55) !important;
+}
+
+:host ::ng-deep .status-filter .p-togglebutton {
+  flex: 0 0 auto;
 }
 
 :host ::ng-deep .status-filter .p-togglebutton {
@@ -156,4 +167,20 @@
 
 :host ::ng-deep .status-filter .p-togglebutton:focus-visible .p-togglebutton-content {
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18) !important;
+}
+
+@media (max-width: 920px) {
+  .status-filter {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :host ::ng-deep .status-filter .p-selectbutton {
+    flex-wrap: nowrap !important;
+    width: max-content !important;
+    min-width: max-content !important;
+    max-width: none !important;
+  }
 }

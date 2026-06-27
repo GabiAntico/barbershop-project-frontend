@@ -10,6 +10,13 @@ import {Select} from 'primeng/select';
 import {CreationShiftRequest, ShiftResponse, ShiftStatus, TimeSlotAvailabilityResponse} from '../../../models/shift.model';
 import {InputText} from 'primeng/inputtext';
 import { finalize } from 'rxjs';
+import { WorkContextService } from '../../../services/work-context.service';
+import { Employee } from '../../../models/work-context.model';
+
+type BarberOption = {
+  id: number | null;
+  label: string;
+};
 
 @Component({
   selector: 'app-edit-shift',
@@ -30,6 +37,7 @@ export class EditShiftComponent implements OnInit {
   constructor(private fb: FormBuilder,
               private shiftService: ShiftService,
               private clientService: ClientService,
+              private workContextService: WorkContextService,
               private messageService: MessageService,
               private router: Router,
               private route: ActivatedRoute) { }
@@ -39,6 +47,8 @@ export class EditShiftComponent implements OnInit {
   timeSlots: TimeSlotAvailabilityResponse[] = [];
   loadingTimeSlots = false;
   isSaving = false;
+  employees: Employee[] = [];
+  barberOptions: BarberOption[] = [{ id: null, label: 'Asignar automaticamente' }];
   shiftId!: number;
   originalShiftDate: string | null = null;
   originalShiftTime: string | null = null;
@@ -56,6 +66,7 @@ export class EditShiftComponent implements OnInit {
       date: [null, Validators.required],
       time: [null, Validators.required],
       client: [null, Validators.required],
+      assignedEmployeeId: [null],
       status: [null, Validators.required],
       estimatedAmount: [0, [Validators.min(0)]]
     });
@@ -66,9 +77,22 @@ export class EditShiftComponent implements OnInit {
       }
     });
 
+    this.workContextService.getEmployees().subscribe({
+      next: employees => {
+        this.employees = employees;
+        this.updateBarberOptions();
+      }
+    });
+
     this.formShift.get('date')!.valueChanges.subscribe((selectedDate: Date | null) => {
       this.formShift.get('time')!.setValue(null);
+      this.formShift.get('assignedEmployeeId')!.setValue(null);
       this.loadAvailability(selectedDate);
+    });
+
+    this.formShift.get('time')!.valueChanges.subscribe(() => {
+      this.formShift.get('assignedEmployeeId')!.setValue(null, { emitEvent: false });
+      this.updateBarberOptions();
     });
 
     this.shiftId = Number(this.route.snapshot.paramMap.get('id'));
@@ -89,6 +113,7 @@ export class EditShiftComponent implements OnInit {
           date: fullDate,
           time: selectedTime,
           client: data.clientId,
+          assignedEmployeeId: data.assignedEmployeeId ?? null,
           status: data.status,
           estimatedAmount: data.estimatedAmount ?? 0
         }, { emitEvent: false });
@@ -116,6 +141,7 @@ export class EditShiftComponent implements OnInit {
     const date: Date = form.get('date')!.value;
     const time: string = form.get('time')!.value;
     const clientId: number = form.get('client')!.value;
+    const assignedEmployeeId: number | null = form.get('assignedEmployeeId')!.value;
     const status: ShiftStatus  = form.get('status')!.value;
     const estimatedAmount = form.get('estimatedAmount')!.value;
 
@@ -134,6 +160,7 @@ export class EditShiftComponent implements OnInit {
     const shiftRequest: CreationShiftRequest = {
       datetime: datetime,
       clientId: clientId,
+      assignedEmployeeId: assignedEmployeeId,
       status: status,
       estimatedAmount: estimatedAmount === null || estimatedAmount === '' ? null : Number(estimatedAmount)
     };
@@ -171,6 +198,20 @@ export class EditShiftComponent implements OnInit {
     return this.formShift.get('time')!.value === slot.time;
   }
 
+  getAvailabilityLabel(slot: TimeSlotAvailabilityResponse): string {
+    if (slot.totalCapacity <= 0) return 'Sin barberos';
+
+    return `${slot.availableCount}/${slot.totalCapacity} libres`;
+  }
+
+  hasSelectedTime(): boolean {
+    return !!this.formShift.get('time')!.value;
+  }
+
+  getBarberLabel(employee: Employee): string {
+    return employee.displayName || employee.email;
+  }
+
   getClientLabel(client: ClientResponse): string {
     const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
     const contact = client.email ? `${client.phoneNumber} - ${client.email}` : client.phoneNumber;
@@ -191,8 +232,9 @@ export class EditShiftComponent implements OnInit {
         this.loadingTimeSlots = false;
 
         if (selectedTime) {
-          this.formShift.get('time')!.setValue(selectedTime);
+          this.formShift.get('time')!.setValue(selectedTime, { emitEvent: false });
         }
+        this.updateBarberOptions();
       },
       error: () => {
         this.timeSlots = [];
@@ -239,5 +281,28 @@ export class EditShiftComponent implements OnInit {
         available: true
       };
     });
+  }
+
+  private updateBarberOptions(): void {
+    const selectedTime = this.formShift?.get('time')?.value;
+    const selectedSlot = this.timeSlots.find(slot => slot.time === selectedTime);
+    const availableIds = selectedSlot?.availableEmployeeIds ?? [];
+    const currentAssignedId = this.formShift?.get('assignedEmployeeId')?.value;
+    const activeBranchId = this.workContextService.getActiveBranchId();
+
+    const availableEmployees = this.employees.filter(employee => {
+      const belongsToBranch = !activeBranchId || employee.branches.some(branch => branch.id === activeBranchId);
+      const availableForSlot = !selectedSlot || availableIds.includes(employee.id) || employee.id === currentAssignedId;
+
+      return belongsToBranch && availableForSlot;
+    });
+
+    this.barberOptions = [
+      { id: null, label: 'Asignar automaticamente' },
+      ...availableEmployees.map(employee => ({
+        id: employee.id,
+        label: this.getBarberLabel(employee)
+      }))
+    ];
   }
 }

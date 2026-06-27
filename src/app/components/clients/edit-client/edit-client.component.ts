@@ -38,8 +38,12 @@ export class EditClientComponent implements OnInit {
       documentNumber: [''],
       email: ['', [Validators.email]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
+      selfResponsible: [true],
+      responsibleContactName: [''],
       notes: ['']
     });
+    this.configureResponsibleValidators();
+    this.form.get('selfResponsible')?.valueChanges.subscribe(() => this.configureResponsibleValidators());
 
     const id = this.route.snapshot.paramMap.get('id');
     this.clientService.getClientById(Number(id)).subscribe({
@@ -51,8 +55,11 @@ export class EditClientComponent implements OnInit {
           documentNumber: client.documentNumber ?? '',
           email: client.email ?? '',
           phoneNumber: client.phoneNumber ?? '',
+          selfResponsible: client.selfResponsible ?? true,
+          responsibleContactName: client.responsibleContactName ?? '',
           notes: client.notes ?? ''
         });
+        this.configureResponsibleValidators();
       },
       error: (err) => {
         console.error(err);
@@ -91,6 +98,10 @@ export class EditClientComponent implements OnInit {
       documentNumber: emptyToNull(form.get('documentNumber')?.value),
       email: emptyToNull(form.get('email')?.value),
       phoneNumber: form.get('phoneNumber')?.value.trim(),
+      selfResponsible: Boolean(form.get('selfResponsible')?.value),
+      responsibleContactName: this.isSelfResponsible()
+        ? this.buildClientFullName()
+        : emptyToNull(form.get('responsibleContactName')?.value),
       notes: emptyToNull(form.get('notes')?.value)
     };
 
@@ -121,7 +132,7 @@ export class EditClientComponent implements OnInit {
     const rawError = typeof error?.error === 'string' ? error.error : JSON.stringify(error?.error ?? {});
     const normalizedMessage = String(`${backendMessage} ${rawError} ${error?.message ?? ''}`).toLowerCase();
 
-    if (error?.status === 409 || normalizedMessage.includes('phone number already exists')) {
+    if (error?.status === 409 || normalizedMessage.includes('phone number already exists') || normalizedMessage.includes('client already exists')) {
       return 'El cliente ya existe';
     }
 
@@ -130,5 +141,41 @@ export class EditClientComponent implements OnInit {
     }
 
     return backendMessage || fallback;
+  }
+
+  isSelfResponsible(): boolean {
+    return Boolean(this.form?.get('selfResponsible')?.value);
+  }
+
+  private configureResponsibleValidators(): void {
+    const firstName = this.form.get('firstName');
+    const responsibleContactName = this.form.get('responsibleContactName');
+
+    if (!firstName || !responsibleContactName) return;
+
+    if (this.isSelfResponsible()) {
+      firstName.clearValidators();
+      responsibleContactName.clearValidators();
+      responsibleContactName.setValue(this.buildClientFullName(), { emitEvent: false });
+    } else {
+      firstName.setValidators([Validators.required]);
+      responsibleContactName.setValidators([Validators.required]);
+    }
+
+    firstName.updateValueAndValidity({ emitEvent: false });
+    responsibleContactName.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private buildClientFullName(): string | null {
+    const emptyToNull = (value: any) => {
+      if (typeof value !== 'string') return null;
+      const trimmed = value.trim();
+      return trimmed === '' ? null : trimmed;
+    };
+    const firstName = emptyToNull(this.form.get('firstName')?.value);
+    const lastName = emptyToNull(this.form.get('lastName')?.value);
+    const fullName = `${firstName ?? ''} ${lastName ?? ''}`.trim();
+
+    return fullName || null;
   }
 }

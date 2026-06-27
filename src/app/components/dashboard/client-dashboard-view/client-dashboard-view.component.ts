@@ -102,15 +102,15 @@ export class ClientDashboardViewComponent implements OnInit {
     const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
     const contact = client.phoneNumber || client.email || '';
 
-    return fullName ? `${fullName} - ${contact}` : contact || '-';
+    return fullName ? `${fullName} - ${contact}` : contact || '\u2014';
   }
 
   getSelectedClientName(): string {
     const client = this.dashboard?.client;
-    if (!client) return '-';
+    if (!client) return '\u2014';
 
     const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
-    return fullName || client.phoneNumber || client.email || '-';
+    return fullName || client.phoneNumber || client.email || '\u2014';
   }
 
   formatMoney(value: number | null | undefined): string {
@@ -129,7 +129,7 @@ export class ClientDashboardViewComponent implements OnInit {
   }
 
   formatVisitDate(datetime: string | null | undefined): string {
-    if (!datetime) return '-';
+    if (!datetime) return '\u2014';
 
     return new Date(datetime).toLocaleDateString('es-AR', {
       day: '2-digit',
@@ -141,7 +141,7 @@ export class ClientDashboardViewComponent implements OnInit {
   getAverageCutFrequencyLabel(): string {
     const average = this.dashboard?.visitFrequency.averageDaysBetweenVisits;
 
-    return average ? `Cada ${average} dias` : '-';
+    return average ? `Cada ${average} dias` : '\u2014';
   }
 
   goToClientNotes(): void {
@@ -158,7 +158,9 @@ export class ClientDashboardViewComponent implements OnInit {
     if (!this.selectedClientId) return;
 
     this.showNotesConfirmation = false;
-    this.router.navigate(['/clients', this.selectedClientId, 'notes']);
+    this.router.navigate(['/clients', this.selectedClientId, 'notes'], {
+      queryParams: { returnTo: 'stats' }
+    });
   }
 
   getPieStyle(): Record<string, string> {

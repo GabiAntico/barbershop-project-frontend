@@ -21,7 +21,7 @@
         pInputText
         type="text"
         class="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0"
-        placeholder="Nombre, apellido, email o telefono..."
+        placeholder="Nombre, responsable, email o telefono..."
         (input)="onSearch(search.value, dt)"
       />
     </div>
@@ -33,7 +33,7 @@
       [paginator]="true"
       [rows]="8"
       [rowsPerPageOptions]="[8, 15, 25]"
-      [globalFilterFields]="['firstName','lastName','email','phoneNumber']"
+      [globalFilterFields]="['firstName','lastName','responsibleContactName','email','phoneNumber']"
       [showCurrentPageReport]="true"
       responsiveLayout="scroll"
       currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clientes"
@@ -42,6 +42,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th>Nombre</th>
+          <th>Responsable</th>
           <th>Email</th>
           <th>Telefono</th>
           <th class="pr-6 w-[180px]">
@@ -58,10 +59,13 @@
             {{ getClientName(c) }}
           </td>
           <td class="text-slate-200">
-            {{ c.email || '-' }}
+            {{ getResponsibleName(c) }}
           </td>
           <td class="text-slate-200">
-            {{ c.phoneNumber || '-' }}
+            {{ c.email || '\u2014' }}
+          </td>
+          <td class="text-slate-200">
+            {{ c.phoneNumber || '\u2014' }}
           </td>
           <td class="text-right py-2 pr-6">
             <div class="flex justify-end gap-2">
@@ -80,7 +84,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="4" class="py-8 text-center text-slate-300">
+          <td colspan="5" class="py-8 text-center text-slate-300">
             No hay clientes para mostrar.
           </td>
         </tr>
@@ -101,12 +105,17 @@
             <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
                 <p class="text-xs text-slate-400">Telefono</p>
-                <p class="mt-1 text-slate-100 font-medium truncate">{{ c.phoneNumber || '-' }}</p>
+                <p class="mt-1 text-slate-100 font-medium truncate">{{ c.phoneNumber || '\u2014' }}</p>
+              </div>
+
+              <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
+                <p class="text-xs text-slate-400">Responsable</p>
+                <p class="mt-1 text-slate-100 font-medium truncate">{{ getResponsibleName(c) }}</p>
               </div>
 
               <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
                 <p class="text-xs text-slate-400">Email</p>
-                <p class="mt-1 text-slate-100 font-medium truncate">{{ c.email || '-' }}</p>
+                <p class="mt-1 text-slate-100 font-medium truncate">{{ c.email || '\u2014' }}</p>
               </div>
             </div>
 

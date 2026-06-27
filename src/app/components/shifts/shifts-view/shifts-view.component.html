@@ -73,14 +73,14 @@
       <ng-template pTemplate="body" let-s>
         <tr class="hover:bg-slate-800/40 transition">
           <td class="text-slate-100">
-            {{ s.datetime ? (s.datetime.includes('T') ? s.datetime.split('T')[0] : s.datetime.split(' ')[0]) : '—' }}
+            {{ s.datetime ? (s.datetime.includes('T') ? s.datetime.split('T')[0] : s.datetime.split(' ')[0]) : '\u2014' }}
           </td>
 
           <td class="text-slate-200">
             {{
               s.datetime
                 ? (s.datetime.includes('T') ? s.datetime.split('T')[1].substring(0,5) : s.datetime.split(' ')[1])
-                : '—'
+                : '\u2014'
             }}
           </td>
 
@@ -89,7 +89,7 @@
           </td>
 
           <td class="text-slate-200">
-            {{ s.client?.phoneNumber || '—' }}
+            {{ s.client?.phoneNumber || '\u2014' }}
           </td>
 
           <td>
@@ -101,7 +101,7 @@
                 'bg-red-500/20 text-red-400 border border-red-500/30': s.status === 'CANCELLED'
               }"
             >
-              {{ s?.status ? getStatusLabel(s.status) : '—' }}
+              {{ s?.status ? getStatusLabel(s.status) : '\u2014' }}
             </span>
           </td>
 
@@ -167,7 +167,7 @@
             <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
               <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
                 <p class="text-xs text-slate-400">Telefono</p>
-                <p class="mt-1 text-slate-100 font-medium truncate">{{ s.client.phoneNumber || '-' }}</p>
+                <p class="mt-1 text-slate-100 font-medium truncate">{{ s.client.phoneNumber || '\u2014' }}</p>
               </div>
 
               <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">

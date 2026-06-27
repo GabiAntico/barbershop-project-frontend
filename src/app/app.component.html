@@ -1,6 +1,7 @@
 <!-- Layout -->
 <div class="min-h-screen text-slate-100">
 
+  @if (!hideShell) {
   <!-- Topbar minima -->
   <header class="app-topbar sticky top-0 z-20 flex items-center gap-3 px-3 sm:px-4 py-3 border-b border-slate-800 bg-slate-950/70 backdrop-blur">
     <!-- Boton hamburguesa -->
@@ -13,7 +14,7 @@
       &#9776;
     </button>
 
-    <div class="app-topbar-title font-semibold tracking-tight truncate">Turnos</div>
+    <div class="app-topbar-title font-semibold tracking-tight truncate">{{ getTopbarTitle() }}</div>
 
     @if (isLoggedIn() && context && context.branches.length > 0) {
       <p-select
@@ -237,6 +238,7 @@
       Shifts Frontend
     </div>
   </aside>
+  }
 
   <!-- Contenido principal -->
   <main class="px-3 sm:px-4 py-4 sm:py-6">

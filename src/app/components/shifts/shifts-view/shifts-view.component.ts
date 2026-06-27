@@ -47,19 +47,19 @@ export class ShiftsViewComponent implements OnInit {
   }
 
   getClientName(client: ClientResponse | null | undefined): string {
-    if (!client) return '—';
+    if (!client) return '\u2014';
 
     const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
 
-    return fullName || '—';
+    return fullName || '\u2014';
   }
 
   getClientPrimary(client: ClientResponse | null | undefined): string {
-    if (!client) return '-';
+    if (!client) return '\u2014';
 
     const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
 
-    return fullName || client.phoneNumber || client.email || '-';
+    return fullName || client.phoneNumber || client.email || '\u2014';
   }
 
   get mobileShifts(): ShiftCompleteResponse[] {
@@ -279,7 +279,7 @@ endstream`);
         this.formatShiftDate(shift.datetime),
         this.formatShiftTime(shift.datetime),
         this.getExportClientName(shift.client),
-        shift.client?.phoneNumber || '-',
+        shift.client?.phoneNumber || '\u2014',
         this.getStatusLabel(shift.status),
         this.formatAmount(shift.estimatedAmount)
       ];
@@ -367,27 +367,27 @@ endstream`);
   }
 
   formatShiftDate(datetime: string): string {
-    if (!datetime) return '-';
+    if (!datetime) return '\u2014';
 
     return datetime.includes('T') ? datetime.split('T')[0] : datetime.split(' ')[0];
   }
 
   formatShiftTime(datetime: string): string {
-    if (!datetime) return '-';
+    if (!datetime) return '\u2014';
 
     return datetime.includes('T')
       ? datetime.split('T')[1].substring(0, 5)
-      : datetime.split(' ')[1] || '-';
+      : datetime.split(' ')[1] || '\u2014';
   }
 
   private getExportClientName(client: ClientResponse | null | undefined): string {
     const name = this.getClientName(client);
 
-    return name !== 'â€”' ? name : client?.phoneNumber || client?.email || '-';
+    return name !== '\u2014' ? name : client?.phoneNumber || client?.email || '\u2014';
   }
 
   formatAmount(amount: number | null | undefined): string {
-    if (amount === null || amount === undefined) return '-';
+    if (amount === null || amount === undefined) return '\u2014';
 
     return `$ ${Number(amount).toFixed(2)}`;
   }

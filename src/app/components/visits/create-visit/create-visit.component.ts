@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Select } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
-import {ShiftService} from '../../../services/shift.service';
+import { ShiftService } from '../../../services/shift.service';
 import { finalize, map, switchMap } from 'rxjs';
-import {ClientService} from '../../../services/client.service';
-import {VisitService} from '../../../services/visit.service';
+import { ClientService } from '../../../services/client.service';
+import { VisitService } from '../../../services/visit.service';
+import { SettingsService } from '../../../services/settings.service';
+import { VisitPaymentMovementRequest, VisitPaymentMovementType } from '../../../models/visit.model';
 
 @Component({
   selector: 'app-create-visit',
@@ -17,22 +19,24 @@ import {VisitService} from '../../../services/visit.service';
 })
 export class CreateVisitComponent implements OnInit {
   formVisit!: FormGroup;
+  movementForm!: FormGroup;
 
   shiftId!: number;
   selectedShift: any = null;
   returnTo: 'agenda' | 'shifts' = 'shifts';
   returnDate: string | null = null;
   isSaving = false;
+  defaultCurrency = 'ARS';
+  errorMessage: string | null = null;
+  paymentMovements: VisitPaymentMovementRequest[] = [];
 
-  paymentStatuses = [
-    { label: 'Pendiente', value: 'PENDING' },
-    { label: 'Pagado', value: 'PAID' },
-    { label: 'Parcial', value: 'PARTIAL' },
-    { label: 'Reembolsado', value: 'REFUNDED' },
-    { label: 'Bonificado', value: 'BONIFIED' }
+  readonly movementTypes = [
+    { label: 'Pago', value: 'PAYMENT' },
+    { label: 'Reembolso', value: 'REFUND' },
+    { label: 'Bonificacion', value: 'BONIFICATION' }
   ];
 
-  paymentMethods = [
+  readonly paymentMethods = [
     { label: 'Efectivo', value: 'CASH' },
     { label: 'Transferencia', value: 'TRANSFER' },
     { label: 'Tarjeta', value: 'CARD' }
@@ -44,12 +48,25 @@ export class CreateVisitComponent implements OnInit {
     CANCELLED: 'Cancelado'
   };
 
+  readonly movementTypeLabels: Record<string, string> = {
+    PAYMENT: 'Pago',
+    REFUND: 'Reembolso',
+    BONIFICATION: 'Bonificacion'
+  };
+
+  readonly paymentMethodLabels: Record<string, string> = {
+    CASH: 'Efectivo',
+    TRANSFER: 'Transferencia',
+    CARD: 'Tarjeta'
+  };
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private shiftService: ShiftService,
     private clientService: ClientService,
     private visitService: VisitService,
+    private settingsService: SettingsService,
     private router: Router
   ) {}
 
@@ -65,37 +82,31 @@ export class CreateVisitComponent implements OnInit {
     this.returnDate = this.route.snapshot.queryParamMap.get('returnDate');
 
     this.formVisit = this.fb.group({
-      totalAmount: [null, [Validators.required, Validators.min(0)]],
-      currency: [''],
-      paymentStatus: [null, Validators.required],
-      paidAt: [null],
-      paymentMethod: [null]
+      totalAmount: [null, [Validators.required, Validators.min(0)]]
     });
 
-    this.formVisit.get('paymentStatus')?.valueChanges.subscribe(status => {
-      const paidAtControl = this.formVisit.get('paidAt');
-      const paymentMethodControl = this.formVisit.get('paymentMethod');
-
-      if (status === 'PAID') {
-        paidAtControl?.setValidators([Validators.required]);
-        paymentMethodControl?.setValidators([Validators.required]);
-      } else {
-        paidAtControl?.setValue(null);
-        paymentMethodControl?.setValue(null);
-        paidAtControl?.clearValidators();
-        paymentMethodControl?.clearValidators();
-      }
-
-      paidAtControl?.updateValueAndValidity();
-      paymentMethodControl?.updateValueAndValidity();
+    this.movementForm = this.fb.group({
+      type: ['PAYMENT', Validators.required],
+      amount: [null, [Validators.required, Validators.min(0.01)]],
+      occurredAt: [new Date(), Validators.required],
+      paymentMethod: ['CASH', Validators.required],
+      notes: ['']
     });
 
-    // acá después cargás el turno por id y lo guardás en selectedShift
+    this.movementForm.get('type')?.valueChanges.subscribe(type => this.syncMovementValidators(type));
+
+    this.settingsService.getSettings().subscribe({
+      next: settings => this.defaultCurrency = settings.defaultCurrency ?? 'ARS'
+    });
+
     this.shiftService.getShiftById(this.shiftId).pipe(
       switchMap(shift => {
         this.selectedShift = shift;
         this.formVisit.patchValue({
           totalAmount: shift.estimatedAmount ?? null
+        });
+        this.movementForm.patchValue({
+          amount: shift.estimatedAmount ?? null
         });
 
         return this.clientService.getClientById(shift.clientId).pipe(
@@ -109,37 +120,88 @@ export class CreateVisitComponent implements OnInit {
           client
         };
       },
-      error: (err) => {
+      error: err => {
         console.error(err);
-        // opcional: redirigir si falla
+        this.errorMessage = 'No se pudo cargar la informacion del turno.';
       }
     });
+  }
 
-    // this.shiftService.getShiftById(this.shiftId).subscribe(...)
+  addMovement(): void {
+    this.errorMessage = null;
+
+    if (this.movementForm.invalid) {
+      this.movementForm.markAllAsTouched();
+      this.errorMessage = 'Revisa los campos del movimiento antes de agregarlo.';
+      return;
+    }
+
+    const value = this.movementForm.value;
+    const type = value.type as VisitPaymentMovementType;
+    const movement: VisitPaymentMovementRequest = {
+      type,
+      amount: Number(value.amount),
+      occurredAt: this.formatLocalDateTime(value.occurredAt) ?? '',
+      paymentMethod: type === 'BONIFICATION' ? null : value.paymentMethod,
+      notes: value.notes?.trim() || null
+    };
+
+    const validationError = this.getMovementValidationError([...this.paymentMovements, movement]);
+    if (validationError) {
+      this.errorMessage = validationError;
+      return;
+    }
+
+    this.paymentMovements = [...this.paymentMovements, movement];
+    this.movementForm.reset({
+      type: 'PAYMENT',
+      amount: null,
+      occurredAt: new Date(),
+      paymentMethod: 'CASH',
+      notes: ''
+    });
+    this.syncMovementValidators('PAYMENT');
+  }
+
+  removeMovement(index: number): void {
+    this.paymentMovements = this.paymentMovements.filter((_, currentIndex) => currentIndex !== index);
+    this.errorMessage = null;
+  }
+
+  get financialValidationMessage(): string | null {
+    if (!this.formVisit) return null;
+
+    return this.getMovementValidationError(this.paymentMovements);
   }
 
   postVisit(): void {
     if (this.isSaving) return;
 
+    this.errorMessage = null;
+
     if (this.formVisit.invalid) {
       this.formVisit.markAllAsTouched();
+      this.errorMessage = 'Revisa el monto total antes de guardar.';
       return;
     }
 
-    const formValue = this.formVisit.value;
+    const validationError = this.financialValidationMessage;
+    if (validationError) {
+      this.errorMessage = validationError;
+      return;
+    }
 
     const payload = {
       shiftId: this.shiftId,
-      ...this.formVisit.value,
-      currency: formValue.currency?.trim() || null,
-      paidAt: this.formatLocalDateTime(formValue.paidAt)
+      totalAmount: Number(this.formVisit.value.totalAmount),
+      paymentMovements: this.paymentMovements
     };
 
     this.isSaving = true;
     this.visitService.postVisit(payload).pipe(
       finalize(() => this.isSaving = false)
     ).subscribe({
-      next: (response) => {
+      next: () => {
         if (this.returnTo === 'agenda') {
           this.router.navigate(['/agenda'], {
             queryParams: this.returnDate ? { date: this.returnDate } : undefined
@@ -149,10 +211,74 @@ export class CreateVisitComponent implements OnInit {
 
         this.router.navigate(['/shifts-view']);
       },
-      error: (err) => {
-        console.log("ERROR: ", err);
+      error: err => {
+        console.error(err);
+        this.errorMessage = err?.error?.message || err?.error?.detail || 'No se pudo guardar la visita.';
       }
-    })
+    });
+  }
+
+  syncMovementValidators(type: string): void {
+    const paymentMethodControl = this.movementForm.get('paymentMethod');
+
+    if (type === 'BONIFICATION') {
+      paymentMethodControl?.setValue(null);
+      paymentMethodControl?.clearValidators();
+    } else {
+      if (!paymentMethodControl?.value) {
+        paymentMethodControl?.setValue('CASH');
+      }
+      paymentMethodControl?.setValidators([Validators.required]);
+    }
+
+    paymentMethodControl?.updateValueAndValidity();
+  }
+
+  getFinancialSummary(movements: VisitPaymentMovementRequest[] = this.paymentMovements) {
+    const total = Number(this.formVisit?.get('totalAmount')?.value ?? 0);
+    const grossPaid = this.sumMovements(movements, 'PAYMENT');
+    const refunded = this.sumMovements(movements, 'REFUND');
+    const bonified = this.sumMovements(movements, 'BONIFICATION');
+    const netPaid = Math.max(grossPaid - refunded, 0);
+    const covered = netPaid + bonified;
+    const pending = Math.max(total - covered, 0);
+
+    return { total, grossPaid, refunded, bonified, netPaid, covered, pending };
+  }
+
+  getMovementValidationError(movements: VisitPaymentMovementRequest[]): string | null {
+    const summary = this.getFinancialSummary(movements);
+
+    if (summary.refunded > summary.grossPaid) {
+      return 'Los reembolsos no pueden superar los pagos recibidos.';
+    }
+
+    if (summary.covered > summary.total) {
+      return 'Los pagos y bonificaciones no pueden superar el monto total.';
+    }
+
+    return null;
+  }
+
+  getMovementTypeLabel(type: string): string {
+    return this.movementTypeLabels[type] ?? type;
+  }
+
+  getPaymentMethodLabel(method: string | null): string {
+    if (!method) return '\u2014';
+
+    return this.paymentMethodLabels[method] ?? method;
+  }
+
+  formatMoney(value: number | null | undefined): string {
+    return `${this.defaultCurrency} ${Number(value ?? 0).toFixed(2)}`;
+  }
+
+  formatDateTime(value: string | null): string {
+    if (!value) return '\u2014';
+
+    const [date, time = ''] = value.includes('T') ? value.split('T') : value.split(' ');
+    return `${date} ${time.substring(0, 5)}`.trim();
   }
 
   formatLocalDateTime(date: Date): string | null {
@@ -164,8 +290,14 @@ export class CreateVisitComponent implements OnInit {
   }
 
   getShiftStatusLabel(status: string | null | undefined): string {
-    if (!status) return '—';
+    if (!status) return '\u2014';
 
     return this.shiftStatusLabels[status] ?? status;
+  }
+
+  private sumMovements(movements: VisitPaymentMovementRequest[], type: VisitPaymentMovementType): number {
+    return movements
+      .filter(movement => movement.type === type)
+      .reduce((total, movement) => total + Number(movement.amount ?? 0), 0);
   }
 }

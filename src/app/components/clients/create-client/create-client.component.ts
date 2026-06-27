@@ -29,11 +29,15 @@ export class CreateClientComponent implements OnInit {
     this.form = this.fb.group({
       email: ['', [Validators.email]],
       phoneNumber: ['', [Validators.required, Validators.pattern(/^\d{8,15}$/)]],
+      selfResponsible: [true],
+      responsibleContactName: [''],
       firstName: [''],
       lastName: [''],
       documentNumber: [''],
       notes: ['']
     });
+    this.configureResponsibleValidators();
+    this.form.get('selfResponsible')?.valueChanges.subscribe(() => this.configureResponsibleValidators());
   }
 
   postClient(form: FormGroup) {
@@ -52,6 +56,10 @@ export class CreateClientComponent implements OnInit {
     const client: CreationClientRequest = {
       email: this.emptyToNull(form.controls['email'].value),
       phoneNumber: form.controls['phoneNumber'].value.trim(),
+      selfResponsible: Boolean(form.controls['selfResponsible'].value),
+      responsibleContactName: this.isSelfResponsible()
+        ? this.buildClientFullName()
+        : this.emptyToNull(form.controls['responsibleContactName'].value),
       firstName: this.emptyToNull(form.controls['firstName'].value),
       lastName: this.emptyToNull(form.controls['lastName'].value),
       documentNumber: this.emptyToNull(form.controls['documentNumber'].value),
@@ -85,7 +93,7 @@ export class CreateClientComponent implements OnInit {
     const rawError = typeof error?.error === 'string' ? error.error : JSON.stringify(error?.error ?? {});
     const normalizedMessage = String(`${backendMessage} ${rawError} ${error?.message ?? ''}`).toLowerCase();
 
-    if (error?.status === 409 || normalizedMessage.includes('phone number already exists')) {
+    if (error?.status === 409 || normalizedMessage.includes('phone number already exists') || normalizedMessage.includes('client already exists')) {
       return 'El cliente ya existe';
     }
 
@@ -94,6 +102,37 @@ export class CreateClientComponent implements OnInit {
     }
 
     return backendMessage || fallback;
+  }
+
+  isSelfResponsible(): boolean {
+    return Boolean(this.form?.get('selfResponsible')?.value);
+  }
+
+  private configureResponsibleValidators(): void {
+    const firstName = this.form.get('firstName');
+    const responsibleContactName = this.form.get('responsibleContactName');
+
+    if (!firstName || !responsibleContactName) return;
+
+    if (this.isSelfResponsible()) {
+      firstName.clearValidators();
+      responsibleContactName.clearValidators();
+      responsibleContactName.setValue(this.buildClientFullName(), { emitEvent: false });
+    } else {
+      firstName.setValidators([Validators.required]);
+      responsibleContactName.setValidators([Validators.required]);
+    }
+
+    firstName.updateValueAndValidity({ emitEvent: false });
+    responsibleContactName.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private buildClientFullName(): string | null {
+    const firstName = this.emptyToNull(this.form.get('firstName')?.value);
+    const lastName = this.emptyToNull(this.form.get('lastName')?.value);
+    const fullName = `${firstName ?? ''} ${lastName ?? ''}`.trim();
+
+    return fullName || null;
   }
 
   private emptyToNull(value: unknown): string | null {

@@ -1,5 +1,5 @@
 <div class="flex justify-center mt-6 sm:mt-12 px-0 sm:px-4">
-  <div class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-full max-w-3xl p-3 sm:p-4 rounded-xl shadow-2xl">
+  <div class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-full max-w-3xl lg:max-w-6xl p-3 sm:p-4 rounded-xl shadow-2xl">
     <h1 class="font-bold mb-4">Configuracion</h1>
 
     <div class="flex gap-2 mb-5 border-b border-slate-800 pb-3 overflow-x-auto">
@@ -71,6 +71,23 @@
           @if (amountForm.get('defaultEstimatedAmount')!.hasError('min') && amountForm.get('defaultEstimatedAmount')!.touched) {
             <span class="mt-1 text-sm text-red-300">El monto no puede ser negativo.</span>
           }
+        </div>
+
+        <div class="flex flex-col mb-4">
+          <label class="text-slate-200 mb-1">Moneda predeterminada</label>
+          <p-select
+            formControlName="defaultCurrency"
+            [options]="currencyOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccionar moneda"
+            class="w-full h-10 rounded-lg
+              !bg-slate-950
+              !border !border-slate-700
+              focus:!border-indigo-400
+              focus:!ring-0
+              !text-slate-100"
+          ></p-select>
         </div>
 
         <button
@@ -208,7 +225,7 @@
     }
 
     @if (activeTab === 'branches' && isAdmin()) {
-      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(320px,0.85fr)_minmax(0,1.35fr)] gap-4">
         <form [formGroup]="branchForm" (ngSubmit)="createBranch()" class="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
           <h2 class="font-semibold mb-3">Nueva sucursal</h2>
           <div class="flex flex-col mb-3">
@@ -252,7 +269,7 @@
     }
 
     @if (activeTab === 'employees' && isAdmin()) {
-      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(320px,0.85fr)_minmax(0,1.35fr)] gap-4">
         <form [formGroup]="employeeForm" (ngSubmit)="createEmployee()" class="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
           <h2 class="font-semibold mb-3">Nuevo empleado</h2>
           <div class="flex flex-col mb-3">
@@ -372,6 +389,95 @@
               >
                 {{ savingEmployeeBranches ? 'Guardando...' : 'Guardar accesos' }}
               </button>
+
+              <div class="mt-5 border-t border-slate-800 pt-4">
+                <div class="mb-3">
+                  <h3 class="font-semibold">Horarios laborales</h3>
+                  <p class="text-sm text-slate-400">Configura en que dias y horarios trabaja este barbero en cada sucursal.</p>
+                </div>
+
+                <div class="flex flex-col mb-3">
+                  <label class="text-slate-200 mb-1">Sucursal</label>
+                  <p-select
+                    [ngModel]="selectedScheduleBranchId"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onEmployeeScheduleBranchChange($event)"
+                    [options]="selectedEmployee.branches"
+                    optionLabel="name"
+                    optionValue="id"
+                    placeholder="Seleccionar sucursal"
+                    class="w-full h-10 rounded-lg
+                      !bg-slate-950
+                      !border !border-slate-700
+                      focus:!border-indigo-400
+                      focus:!ring-0
+                      !text-slate-100"
+                  ></p-select>
+                </div>
+
+                @if (loadingEmployeeSchedule) {
+                  <div class="h-20 rounded-lg border border-slate-800 bg-slate-950/70 flex items-center justify-center text-sm text-slate-400">
+                    Cargando horarios del empleado...
+                  </div>
+                } @else {
+                  <div class="grid grid-cols-1 gap-2">
+                    @for (day of employeeScheduleDays; track day.dayOfWeek) {
+                      <div
+                        class="rounded-lg border p-3"
+                        [ngClass]="day.enabled ? 'bg-slate-900/80 border-slate-700' : 'bg-slate-950/60 border-slate-800'"
+                      >
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <label class="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              class="h-4 w-4 accent-indigo-500"
+                              [checked]="day.enabled"
+                              (change)="toggleEmployeeScheduleDay(day)"
+                            >
+                            <span class="font-medium text-slate-100">{{ getEmployeeScheduleDayLabel(day.dayOfWeek) }}</span>
+                          </label>
+
+                          <div class="grid grid-cols-2 gap-2 sm:w-72">
+                            <p-date-picker
+                              [(ngModel)]="day.startTimeDate"
+                              [ngModelOptions]="{ standalone: true }"
+                              (ngModelChange)="onEmployeeScheduleTimeChange(day, 'startTime', $event)"
+                              [timeOnly]="true"
+                              hourFormat="24"
+                              [disabled]="!day.enabled"
+                              styleClass="w-full"
+                              inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0 disabled:!opacity-50"
+                            ></p-date-picker>
+                            <p-date-picker
+                              [(ngModel)]="day.endTimeDate"
+                              [ngModelOptions]="{ standalone: true }"
+                              (ngModelChange)="onEmployeeScheduleTimeChange(day, 'endTime', $event)"
+                              [timeOnly]="true"
+                              hourFormat="24"
+                              [disabled]="!day.enabled"
+                              styleClass="w-full"
+                              inputStyleClass="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 !text-slate-100 focus:!border-indigo-400 focus:!ring-0 disabled:!opacity-50"
+                            ></p-date-picker>
+                          </div>
+                        </div>
+
+                        @if (day.enabled && minutesBetween(day.startTime, day.endTime) <= 0) {
+                          <div class="mt-2 text-sm text-red-300">La hora de salida debe ser posterior a la entrada.</div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <button
+                  type="button"
+                  class="mt-3 h-10 w-full sm:w-auto px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+                  [disabled]="!selectedScheduleBranchId || !hasEmployeeScheduleChanges() || !hasValidEmployeeSchedule() || savingEmployeeSchedule"
+                  (click)="saveEmployeeSchedule()"
+                >
+                  {{ savingEmployeeSchedule ? 'Guardando...' : 'Guardar horarios' }}
+                </button>
+              </div>
             </div>
           }
         </div>

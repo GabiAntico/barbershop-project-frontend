@@ -51,12 +51,17 @@
 
           <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
             <p class="text-xs text-slate-400">Telefono</p>
-            <p class="mt-1 text-slate-100 font-medium">{{ client?.phoneNumber || '-' }}</p>
+            <p class="mt-1 text-slate-100 font-medium">{{ client?.phoneNumber || '\u2014' }}</p>
           </div>
 
           <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3">
             <p class="text-xs text-slate-400">Email</p>
-            <p class="mt-1 text-slate-100 font-medium break-words">{{ client?.email || '-' }}</p>
+            <p class="mt-1 text-slate-100 font-medium break-words">{{ client?.email || '\u2014' }}</p>
+          </div>
+
+          <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3 sm:col-span-2">
+            <p class="text-xs text-slate-400">Barbero asignado</p>
+            <p class="mt-1 text-slate-100 font-medium">{{ getAssignedEmployeeLabel() }}</p>
           </div>
 
           <div class="rounded-lg bg-slate-900/70 border border-slate-800 p-3 sm:col-span-2">

@@ -1,10 +1,10 @@
 # Barbershop Manager Frontend
 
-Frontend Angular de Barbershop Manager. Implementa la interfaz para administrar clientes, turnos, agenda, visitas, pagos, sucursales, empleados, configuracion y estadisticas.
+Frontend Angular de Barbershop Manager. Implementa la interfaz para administrar clientes, responsables, turnos, agenda, visitas, pagos, sucursales, empleados, horarios laborales, configuración y estadísticas.
 
 ## Stack
 
-- Angular
+- Angular 19
 - TypeScript
 - RxJS
 - Angular Router
@@ -12,6 +12,7 @@ Frontend Angular de Barbershop Manager. Implementa la interfaz para administrar 
 - HTTP Interceptors
 - PrimeNG
 - Tailwind CSS
+- SSR/prerender configurado por Angular
 - Vercel para deploy
 
 ## Requisitos
@@ -20,7 +21,7 @@ Frontend Angular de Barbershop Manager. Implementa la interfaz para administrar 
 - npm
 - Backend levantado localmente o desplegado
 
-## Instalacion
+## Instalación
 
 ```bash
 npm install
@@ -58,9 +59,18 @@ Build demo:
 npm run build:demo
 ```
 
+Verificación actual:
+
+```bash
+npm run build:dev
+npm run build:demo
+```
+
+El proyecto conserva el script `npm test` generado por Angular, pero todavía no cuenta con una suite de tests automatizados representativa. Para este repositorio demo, la verificación recomendada por ahora es compilar ambos perfiles.
+
 ## Environments
 
-Los environments estan en:
+Los environments están en:
 
 ```text
 src/environments/
@@ -69,86 +79,133 @@ src/environments/
 `-- environment.demo.ts
 ```
 
-Cada environment define:
+Ejemplo:
 
 ```ts
 export const environment = {
   production: true,
   profile: 'demo',
-  baseUrl: 'https://tu-backend.onrender.com/api'
+  baseUrl: 'https://barbershop-project-backend.onrender.com/api'
 };
 ```
 
-Para deploy demo, `baseUrl` debe apuntar a la URL publica del backend en Render terminada en `/api`.
+Para deploy demo, `baseUrl` apunta a la API pública del backend en Render terminada en `/api`.
 
 ## Arquitectura frontend
 
 ```text
 src/app/
 |-- components/       Pantallas y componentes principales
-|-- guards/           Proteccion de rutas
+|-- guards/           Protección de rutas
 |-- interceptors/     JWT y sucursal activa
 |-- models/           Tipos TypeScript
-`-- services/         Comunicacion con la API
+`-- services/         Comunicación con la API
+```
+
+Rutas principales:
+
+```text
+/login
+/register
+/change-password
+/agenda
+/shifts-view
+/shifts/:id
+/create-shift
+/edit-shift/:id
+/clients-view
+/clients/:id
+/clients/:id/notes
+/create-client
+/edit-client/:id
+/visits-view
+/visits/create/:shiftId
+/visits/edit/:id
+/dashboard
+/dashboard/clients
+/settings
 ```
 
 ## Funcionalidades UI
 
-- Login y registro.
-- Cambio obligatorio de contrasena temporal.
-- Selector de sucursal activa.
+- Login y registro de barbería.
+- Cambio obligatorio de contraseña temporal.
+- Layout sin sidebar/topbar en pantallas públicas.
+- Topbar con nombre de barbería y selector de sucursal activa.
 - Sidebar responsive.
-- Agenda diaria.
-- Alta y edicion de turnos.
-- Selector visual de horarios.
-- Gestion de clientes.
-- Notas internas de clientes en pantalla separada.
-- Configuracion de monto estimado.
-- Configuracion de disponibilidad horaria.
-- Gestion de sucursales.
-- Gestion de empleados y sucursales asignadas.
-- Atencion de turnos.
-- Edicion de visitas.
+- Agenda diaria con turnos agrupados por horario.
+- Creación y edición de turnos con selector visual de horarios.
+- Capacidad de turnos por cantidad de barberos disponibles.
+- Selección de barbero manual o asignación automática.
+- Vista detallada de turno.
+- Recordatorio manual por WhatsApp desde la agenda.
+- Gestión de clientes con responsable opcional.
+- Vista detallada de cliente.
+- Notas internas de cliente en pantalla separada con confirmación previa.
+- Listados responsive: tablas en escritorio y cards en mobile.
+- Configuración de monto estimado y moneda por defecto.
+- Configuración de disponibilidad horaria de la sucursal.
+- Gestión de sucursales.
+- Gestión de empleados, sucursales asignadas y horarios laborales por empleado.
+- Atender turnos y generar visitas.
+- Edición de visitas.
+- Movimientos de pago, reembolso y bonificación.
 - Dashboard general.
-- Estadisticas por cliente.
-- Exportacion de turnos a PDF.
-- Recordatorio manual por WhatsApp.
+- Estadísticas por cliente.
+- Exportación de turnos a PDF.
+- Loaders en botones de guardado para evitar envíos duplicados.
 
-## Comunicacion con backend
+## Comunicación con backend
 
-El frontend usa:
+El frontend centraliza headers en interceptores:
 
 - `Authorization: Bearer <token>` para requests autenticadas.
 - `X-Branch-Id` para enviar la sucursal activa.
-- Guards para proteger rutas privadas.
-- Interceptor para centralizar headers.
 
-## Deploy sugerido
+El guard de autenticación protege rutas privadas y redirige cuando:
 
-Vercel:
+- No hay token válido.
+- El usuario debe cambiar una contraseña temporal.
+- Falta contexto de trabajo requerido.
+
+## Convenciones de diseño
+
+- Escritorio: tablas para lectura densa de datos.
+- Mobile: cards para evitar scroll horizontal en listados principales.
+- Selectores y date/time pickers con PrimeNG para mantener consistencia visual.
+- Confirmaciones con modales propios de la app, no `alert` del navegador.
+- Botones de guardado con estado de carga para evitar doble submit.
+- Datos vacíos representados con una raya larga consistente.
+
+## Deploy demo
+
+El frontend demo está publicado en Vercel:
+
+```text
+https://barbershop-project-frontend.vercel.app
+```
+
+Configuración del proyecto en Vercel:
 
 - Framework preset: Angular.
-- Root directory: raiz del repo frontend.
+- Root directory: raíz del repo frontend.
 - Install command: `npm install`.
 - Build command: `npm run build:demo`.
 - Output directory: `dist/shifts-frontend/browser`.
 
-Antes de desplegar:
+Configuración de la demo:
 
-1. Verificar `src/environments/environment.demo.ts`.
-2. Confirmar que el backend permite el dominio de Vercel en `APP_FRONTEND_URL`.
-3. Redeployar backend si se cambia la URL del frontend.
+- `environment.demo.ts` apunta a `https://barbershop-project-backend.onrender.com/api`.
+- El backend en Render permite el origen `https://barbershop-project-frontend.vercel.app`.
+- El build publicado corresponde a `npm run build:demo`.
 
-## Troubleshooting
+## Notas técnicas
 
-Si el login o register devuelve `403` desde Vercel:
+- El entorno `dev` apunta al backend local en `http://localhost:8080/api`.
+- El entorno `demo` apunta a la API pública en Render.
+- El frontend envía el JWT y la sucursal activa mediante interceptores HTTP.
+- Las rutas privadas están protegidas por guards.
+- Los listados principales usan tablas en escritorio y cards en mobile.
+- El script `npm test` se conserva por la configuración base de Angular, pero la verificación actual del repo demo se realiza compilando `dev` y `demo`.
 
-- Revisar que `APP_FRONTEND_URL` en Render tenga exactamente el origen del frontend.
-- No incluir rutas como `/login`; solo el origen, por ejemplo `https://app.vercel.app`.
-- Redeployar el backend despues de cambiar variables.
-
-Si el frontend no conecta con el backend:
-
-- Revisar `environment.demo.ts`.
-- Confirmar que `baseUrl` termine en `/api`.
-- Verificar en Network la URL real de la request.
+La configuración de build `demo` usa budgets más amplios que desarrollo porque incluye el bundle necesario para la demo desplegada.

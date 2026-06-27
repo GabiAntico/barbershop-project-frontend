@@ -2,12 +2,18 @@
   <form
     (ngSubmit)="postVisit()"
     [formGroup]="formVisit"
-    class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-full max-w-2xl p-4 rounded-xl shadow-2xl"
+    class="bg-slate-900/60 border border-slate-800 backdrop-blur flex flex-col w-full max-w-3xl p-4 rounded-xl shadow-2xl"
   >
     <h1 class="font-bold mb-4 text-slate-100">Crear visita</h1>
 
+    @if (errorMessage) {
+      <div class="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        {{ errorMessage }}
+      </div>
+    }
+
     <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-4 mb-4">
-      <h2 class="text-sm font-semibold text-slate-200 mb-3">Información del turno</h2>
+      <h2 class="text-sm font-semibold text-slate-200 mb-3">Informacion del turno</h2>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="flex flex-col">
@@ -18,7 +24,7 @@
                 ? (selectedShift.datetime.includes('T')
                   ? selectedShift.datetime.split('T')[0]
                   : selectedShift.datetime.split(' ')[0])
-                : '—'
+                : '\u2014'
             }}
           </div>
         </div>
@@ -31,7 +37,7 @@
                 ? (selectedShift.datetime.includes('T')
                   ? selectedShift.datetime.split('T')[1]?.substring(0, 5)
                   : selectedShift.datetime.split(' ')[1])
-                : '—'
+                : '\u2014'
             }}
           </div>
         </div>
@@ -42,7 +48,7 @@
             {{
               selectedShift?.client?.firstName || selectedShift?.client?.lastName
                 ? ((selectedShift?.client?.firstName ?? '') + ' ' + (selectedShift?.client?.lastName ?? '')).trim()
-                : (selectedShift?.client?.email ?? '—')
+                : (selectedShift?.client?.phoneNumber || selectedShift?.client?.email || '\u2014')
             }}
           </div>
         </div>
@@ -51,13 +57,6 @@
           <span class="text-xs text-slate-400 mb-1">Estado del turno</span>
           <div class="h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 flex items-center text-slate-100">
             {{ getShiftStatusLabel(selectedShift?.status) }}
-          </div>
-        </div>
-
-        <div class="flex flex-col sm:col-span-2">
-          <span class="text-xs text-slate-400 mb-1">Email del cliente</span>
-          <div class="h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 flex items-center text-slate-100">
-            {{ selectedShift?.client?.email ?? '—' }}
           </div>
         </div>
       </div>
@@ -76,39 +75,69 @@
 
       <div class="flex flex-col">
         <label class="text-slate-200 mb-1">Moneda</label>
-        <input
-          type="text"
-          formControlName="currency"
-          maxlength="3"
-          placeholder="ARS"
-          class="w-full h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 focus:border-indigo-400 focus:outline-none uppercase"
-        />
+        <div class="h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 flex items-center">
+          {{ defaultCurrency }}
+        </div>
       </div>
     </div>
 
-    <div class="mb-4 flex flex-col">
-      <label class="text-slate-200 mb-1">Estado de pago</label>
-      <p-select
-        formControlName="paymentStatus"
-        [options]="paymentStatuses"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Seleccionar estado"
-        class="w-full h-10 rounded-lg
-          !bg-slate-950
-          !border !border-slate-700
-          focus:!border-indigo-400
-          focus:!ring-0
-          !text-slate-100"
-      ></p-select>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-3">
+        <span class="text-xs text-slate-400">Pagado</span>
+        <div class="mt-1 font-bold text-green-300">{{ formatMoney(getFinancialSummary().grossPaid) }}</div>
+      </div>
+      <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-3">
+        <span class="text-xs text-slate-400">Reembolsado</span>
+        <div class="mt-1 font-bold text-red-300">{{ formatMoney(getFinancialSummary().refunded) }}</div>
+      </div>
+      <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-3">
+        <span class="text-xs text-slate-400">Bonificado</span>
+        <div class="mt-1 font-bold text-violet-300">{{ formatMoney(getFinancialSummary().bonified) }}</div>
+      </div>
+      <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-3">
+        <span class="text-xs text-slate-400">Pendiente</span>
+        <div class="mt-1 font-bold text-yellow-300">{{ formatMoney(getFinancialSummary().pending) }}</div>
+      </div>
     </div>
 
-    @if (formVisit.get('paymentStatus')?.value === 'PAID') {
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+    @if (financialValidationMessage) {
+      <div class="mb-4 rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
+        {{ financialValidationMessage }}
+      </div>
+    }
+
+    <div class="bg-slate-950/45 border border-slate-800 rounded-lg p-4 mb-4" [formGroup]="movementForm">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="text-sm font-semibold text-slate-200">Movimientos de pago</h2>
+        <span class="text-xs text-slate-500">El estado se calcula automaticamente</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="flex flex-col">
-          <label class="text-slate-200 mb-1">Fecha de pago</label>
+          <label class="text-slate-200 mb-1">Tipo</label>
+          <p-select
+            formControlName="type"
+            [options]="movementTypes"
+            optionLabel="label"
+            optionValue="value"
+            class="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 focus:!border-indigo-400 focus:!ring-0 !text-slate-100"
+          ></p-select>
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-slate-200 mb-1">Monto</label>
+          <input
+            type="number"
+            formControlName="amount"
+            placeholder="0.00"
+            class="w-full h-10 px-3 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 focus:border-indigo-400 focus:outline-none"
+          />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="text-slate-200 mb-1">Fecha</label>
           <p-date-picker
-            formControlName="paidAt"
+            formControlName="occurredAt"
             [showTime]="true"
             hourFormat="24"
             dateFormat="dd-mm-yy"
@@ -117,29 +146,76 @@
           ></p-date-picker>
         </div>
 
-        <div class="flex flex-col">
-          <label class="text-slate-200 mb-1">Método de pago</label>
-          <p-select
-            formControlName="paymentMethod"
-            [options]="paymentMethods"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Seleccionar método"
-            class="w-full h-10 rounded-lg
-              !bg-slate-950
-              !border !border-slate-700
-              focus:!border-indigo-400
-              focus:!ring-0
-              !text-slate-100"
-          ></p-select>
+        @if (movementForm.get('type')?.value !== 'BONIFICATION') {
+          <div class="flex flex-col">
+            <label class="text-slate-200 mb-1">Metodo</label>
+            <p-select
+              formControlName="paymentMethod"
+              [options]="paymentMethods"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccionar metodo"
+              class="w-full h-10 rounded-lg !bg-slate-950 !border !border-slate-700 focus:!border-indigo-400 focus:!ring-0 !text-slate-100"
+            ></p-select>
+          </div>
+        }
+
+        <div class="flex flex-col sm:col-span-2">
+          <label class="text-slate-200 mb-1">Notas</label>
+          <textarea
+            formControlName="notes"
+            rows="2"
+            placeholder="Detalle opcional del movimiento"
+            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-slate-100 focus:border-indigo-400 focus:outline-none resize-none"
+          ></textarea>
         </div>
       </div>
-    }
+
+      <button
+        type="button"
+        class="mt-3 h-10 w-full sm:w-auto px-4 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium cursor-pointer"
+        (click)="addMovement()"
+      >
+        Agregar movimiento
+      </button>
+
+      <div class="mt-4 space-y-2">
+        @if (paymentMovements.length === 0) {
+          <div class="rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-3 text-sm text-slate-400">
+            Sin movimientos cargados. La visita quedara pendiente.
+          </div>
+        } @else {
+          @for (movement of paymentMovements; track $index) {
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-slate-800 bg-slate-900/70 p-3">
+              <div class="min-w-0">
+                <div class="font-semibold text-slate-100">
+                  {{ getMovementTypeLabel(movement.type) }} · {{ formatMoney(movement.amount) }}
+                </div>
+                <div class="text-xs text-slate-400">
+                  {{ formatDateTime(movement.occurredAt) }} · {{ getPaymentMethodLabel(movement.paymentMethod) }}
+                </div>
+                @if (movement.notes) {
+                  <div class="mt-1 text-xs text-slate-500">{{ movement.notes }}</div>
+                }
+              </div>
+
+              <button
+                type="button"
+                class="h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
+                (click)="removeMovement($index)"
+              >
+                Quitar
+              </button>
+            </div>
+          }
+        }
+      </div>
+    </div>
 
     <div class="flex flex-col sm:flex-row gap-2">
       <button
         type="submit"
-        [disabled]="isSaving"
+        [disabled]="isSaving || !!financialValidationMessage"
         class="h-10 w-full sm:w-auto px-4 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white font-medium cursor-pointer disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
       >
         {{ isSaving ? 'Guardando...' : 'Guardar' }}
