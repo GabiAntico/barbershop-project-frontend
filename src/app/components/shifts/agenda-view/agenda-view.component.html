@@ -32,30 +32,73 @@
       <div class="space-y-2">
         @for (slot of slots; track slot.time) {
           <div
-            class="grid grid-cols-1 sm:grid-cols-[72px_1fr] md:grid-cols-[72px_1fr_auto] gap-3 items-center rounded-lg border p-3"
-            [ngClass]="slot.shift ? 'border-slate-700 bg-slate-950/80' : 'border-slate-800 bg-slate-950/40'"
+            class="grid grid-cols-1 sm:grid-cols-[72px_1fr] md:grid-cols-[72px_1fr_auto] gap-3 items-start rounded-lg border p-3"
+            [ngClass]="slot.shifts.length > 0 ? 'border-slate-700 bg-slate-950/80' : 'border-slate-800 bg-slate-950/40'"
           >
             <div class="text-sm font-semibold text-slate-200">
               {{ slot.time }}
+              <div class="mt-1 text-[11px] font-medium text-slate-400">
+                {{ getCapacityLabel(slot) }}
+              </div>
             </div>
 
             <div>
-              @if (slot.shift) {
-                <div class="flex flex-col gap-1">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="font-semibold text-slate-100">{{ getClientName(slot.shift.client) }}</span>
-                    <span class="text-slate-400">{{ slot.shift.client.phoneNumber }}</span>
-                  </div>
-                  <span
-                    class="w-fit px-3 py-1 text-xs font-medium rounded-full"
-                    [ngClass]="{
-                      'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30': slot.shift.status === 'PENDING',
-                      'bg-green-500/20 text-green-400 border border-green-500/30': slot.shift.status === 'COMPLETED',
-                      'bg-red-500/20 text-red-400 border border-red-500/30': slot.shift.status === 'CANCELLED'
-                    }"
-                  >
-                    {{ getStatusLabel(slot.shift.status) }}
-                  </span>
+              @if (slot.shifts.length > 0) {
+                <div class="space-y-2">
+                  @for (shift of slot.shifts; track shift.id) {
+                    <div class="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
+                      <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                        <div class="min-w-0">
+                          <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-semibold text-slate-100">{{ getClientName(shift.client) }}</span>
+                            <span class="text-slate-400">{{ shift.client.phoneNumber }}</span>
+                          </div>
+                          <div class="mt-1 text-xs text-slate-400">
+                            Barbero: {{ getEmployeeLabel(shift) }}
+                          </div>
+                        </div>
+
+                        <span
+                          class="w-fit px-3 py-1 text-xs font-medium rounded-full"
+                          [ngClass]="{
+                            'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30': shift.status === 'PENDING',
+                            'bg-green-500/20 text-green-400 border border-green-500/30': shift.status === 'COMPLETED',
+                            'bg-red-500/20 text-red-400 border border-red-500/30': shift.status === 'CANCELLED'
+                          }"
+                        >
+                          {{ getStatusLabel(shift.status) }}
+                        </span>
+                      </div>
+
+                      <div class="mt-3 flex flex-col sm:flex-row justify-end gap-2">
+                        <button
+                          type="button"
+                          [disabled]="!canSendWhatsAppReminderForShift(shift, slot.time)"
+                          class="h-9 w-full sm:w-auto px-3 rounded-lg bg-green-600 hover:bg-green-500 text-white cursor-pointer disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+                          (click)="sendWhatsAppReminderForShift(shift, slot.time)"
+                        >
+                          WhatsApp
+                        </button>
+
+                        @if (shift.status === 'PENDING') {
+                          <button
+                            type="button"
+                            class="h-9 w-full sm:w-auto px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer"
+                            (click)="goToCreateVisit(shift.id)"
+                          >
+                            Atender
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          class="h-9 w-full sm:w-auto px-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 cursor-pointer"
+                          (click)="goToEditShift(shift.id)"
+                        >
+                          Editar
+                        </button>
+                      </div>
+                    </div>
+                  }
                 </div>
               } @else {
                 <span class="text-slate-500">Libre</span>
@@ -63,42 +106,14 @@
             </div>
 
             <div class="sm:col-span-2 md:col-span-1 flex flex-col sm:flex-row justify-end gap-2">
-              @if (slot.shift) {
-                <button
-                  type="button"
-                  [disabled]="!canSendWhatsAppReminder(slot)"
-                  class="h-9 w-full sm:w-auto px-3 rounded-lg bg-green-600 hover:bg-green-500 text-white cursor-pointer disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
-                  (click)="sendWhatsAppReminder(slot)"
-                >
-                  WhatsApp
-                </button>
-
-                @if (slot.shift.status === 'PENDING') {
-                  <button
-                    type="button"
-                    class="h-9 w-full sm:w-auto px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer"
-                    (click)="goToCreateVisit(slot.shift.id)"
-                  >
-                    Atender
-                  </button>
-                }
-                <button
-                  type="button"
-                  class="h-9 w-full sm:w-auto px-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 cursor-pointer"
-                  (click)="goToEditShift(slot.shift.id)"
-                >
-                  Editar
-                </button>
-              } @else {
-                <button
-                  type="button"
-                  [disabled]="!slot.available"
-                  class="h-9 w-full sm:w-auto px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
-                  (click)="goToCreateShift(slot)"
-                >
-                  Crear turno
-                </button>
-              }
+              <button
+                type="button"
+                [disabled]="!slot.available"
+                class="h-9 w-full sm:w-auto px-3 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+                (click)="goToCreateShift(slot)"
+              >
+                Crear turno
+              </button>
             </div>
           </div>
         }

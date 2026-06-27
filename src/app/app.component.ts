@@ -20,6 +20,7 @@ import {Branch, WorkContext} from './models/work-context.model';
 export class AppComponent implements OnInit {
   title = 'shifts-frontend';
   sidebarOpen = false;
+  hideShell = false;
   context: WorkContext | null = null;
   activeBranch: Branch | null = null;
   selectedBranchId: number | null = null;
@@ -33,6 +34,8 @@ export class AppComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.updateShellVisibility(this.router.url);
+
     this.workContextService.context$.subscribe(context => {
       this.context = context;
     });
@@ -47,7 +50,8 @@ export class AppComponent implements OnInit {
 
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe(() => {
+      .subscribe(event => {
+        this.updateShellVisibility((event as NavigationEnd).urlAfterRedirects);
         this.sidebarOpen = false;
         if (this.authService.isLoggedIn() && !this.context) {
           this.loadContext();
@@ -69,6 +73,7 @@ export class AppComponent implements OnInit {
     if (this.isActive('/agenda')) return 'Agenda';
     if (this.isActive('/create-client')) return 'Crear clientes';
     if (this.router.url.includes('/clients/') && this.router.url.includes('/notes')) return 'Notas internas';
+    if (/^\/clients\/\d+($|[?#])/.test(this.router.url)) return 'Detalle cliente';
     if (this.isActive('/clients-view')) return 'Ver clientes';
     if (this.isActive('/create-shift')) return 'Cargar turnos';
     if (this.isActive('/shifts-view')) return 'Ver turnos';
@@ -76,6 +81,14 @@ export class AppComponent implements OnInit {
     if (this.isActive('/settings')) return 'Configuracion';
 
     return 'Turnos';
+  }
+
+  getTopbarTitle(): string {
+    if (this.isLoggedIn()) {
+      return this.context?.barbershopName || 'Barberia';
+    }
+
+    return 'Barberia';
   }
 
   isLoggedIn(): boolean {
@@ -104,5 +117,14 @@ export class AppComponent implements OnInit {
         this.activeBranch = null;
       }
     });
+  }
+
+  private updateShellVisibility(url: string): void {
+    const path = url.split(/[?#]/)[0];
+    this.hideShell = ['/login', '/register', '/change-password'].some(route => path === route);
+
+    if (this.hideShell) {
+      this.sidebarOpen = false;
+    }
   }
 }

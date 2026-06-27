@@ -51,9 +51,27 @@ export class ClientNotesViewComponent implements OnInit {
   }
 
   getClientLabel(): string {
-    if (!this.client) return '-';
+    if (!this.client) return '\u2014';
 
     const fullName = [this.client.firstName, this.client.lastName].filter(Boolean).join(' ');
-    return fullName || this.client.phoneNumber || this.client.email || '-';
+    return fullName || this.client.phoneNumber || this.client.email || '\u2014';
+  }
+
+  goBack(): void {
+    if (!this.client) {
+      this.router.navigate(['/clients-view']);
+      return;
+    }
+
+    const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+
+    if (returnTo === 'detail') {
+      this.router.navigate(['/clients', this.client.id]);
+      return;
+    }
+
+    this.router.navigate(['/dashboard/clients'], {
+      queryParams: { clientId: this.client.id }
+    });
   }
 }

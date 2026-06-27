@@ -11,6 +11,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { InputText } from 'primeng/inputtext';
 import { SettingsService } from '../../../services/settings.service';
 import { finalize } from 'rxjs';
+import { WorkContextService } from '../../../services/work-context.service';
+import { Employee } from '../../../models/work-context.model';
+
+type BarberOption = {
+  id: number | null;
+  label: string;
+};
 
 @Component({
   selector: 'app-create-shift',
@@ -33,6 +40,7 @@ export class CreateShiftComponent implements OnInit {
     private shiftService: ShiftService,
     private clientService: ClientService,
     private settingsService: SettingsService,
+    private workContextService: WorkContextService,
     private messageService: MessageService,
     private router: Router,
     private route: ActivatedRoute
@@ -43,6 +51,8 @@ export class CreateShiftComponent implements OnInit {
   timeSlots: TimeSlotAvailabilityResponse[] = [];
   loadingTimeSlots = false;
   isSaving = false;
+  employees: Employee[] = [];
+  barberOptions: BarberOption[] = [{ id: null, label: 'Asignar automaticamente' }];
   returnTo: 'agenda' | 'shifts' = 'shifts';
   returnDate: string | null = null;
 
@@ -53,6 +63,7 @@ export class CreateShiftComponent implements OnInit {
       date: [null, Validators.required],
       time: [null, Validators.required],
       client: [null, Validators.required],
+      assignedEmployeeId: [null],
       estimatedAmount: [0, [Validators.min(0)]]
     })
 
@@ -61,6 +72,13 @@ export class CreateShiftComponent implements OnInit {
         this.clients = data
       }
     })
+
+    this.workContextService.getEmployees().subscribe({
+      next: employees => {
+        this.employees = employees;
+        this.updateBarberOptions();
+      }
+    });
 
     this.settingsService.getSettings().subscribe({
       next: settings => {
@@ -79,7 +97,13 @@ export class CreateShiftComponent implements OnInit {
 
     this.formShift.get('date')!.valueChanges.subscribe((selectedDate: Date | null) => {
       this.formShift.get('time')!.setValue(null);
+      this.formShift.get('assignedEmployeeId')!.setValue(null);
       this.loadAvailability(selectedDate);
+    });
+
+    this.formShift.get('time')!.valueChanges.subscribe(() => {
+      this.formShift.get('assignedEmployeeId')!.setValue(null, { emitEvent: false });
+      this.updateBarberOptions();
     });
 
     const dateParam = this.route.snapshot.queryParamMap.get('date');
@@ -111,6 +135,7 @@ export class CreateShiftComponent implements OnInit {
     const date: Date = form.get('date')!.value;
     const time: string = form.get('time')!.value;
     const clientId: number = form.get('client')!.value;
+    const assignedEmployeeId: number | null = form.get('assignedEmployeeId')!.value;
     const estimatedAmount = form.get('estimatedAmount')!.value;
 
     const dt = new Date(date);
@@ -128,6 +153,7 @@ export class CreateShiftComponent implements OnInit {
     const shiftRequest: CreationShiftRequest = {
       datetime: datetime,
       clientId: clientId,
+      assignedEmployeeId: assignedEmployeeId,
       estimatedAmount: estimatedAmount === null || estimatedAmount === '' ? null : Number(estimatedAmount)
     }
 
@@ -168,6 +194,20 @@ export class CreateShiftComponent implements OnInit {
     return this.formShift.get('time')!.value === slot.time;
   }
 
+  getAvailabilityLabel(slot: TimeSlotAvailabilityResponse): string {
+    if (slot.totalCapacity <= 0) return 'Sin barberos';
+
+    return `${slot.availableCount}/${slot.totalCapacity} libres`;
+  }
+
+  hasSelectedTime(): boolean {
+    return !!this.formShift.get('time')!.value;
+  }
+
+  getBarberLabel(employee: Employee): string {
+    return employee.displayName || employee.email;
+  }
+
   getClientLabel(client: ClientResponse): string {
     const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
     const contact = client.email ? `${client.phoneNumber} - ${client.email}` : client.phoneNumber;
@@ -190,6 +230,7 @@ export class CreateShiftComponent implements OnInit {
         if (selectedTime) {
           this.formShift.get('time')!.setValue(selectedTime);
         }
+        this.updateBarberOptions();
       },
       error: () => {
         this.timeSlots = [];
@@ -226,5 +267,27 @@ export class CreateShiftComponent implements OnInit {
     }
 
     this.router.navigate(['/shifts-view']);
+  }
+
+  private updateBarberOptions(): void {
+    const selectedTime = this.formShift?.get('time')?.value;
+    const selectedSlot = this.timeSlots.find(slot => slot.time === selectedTime);
+    const availableIds = selectedSlot?.availableEmployeeIds ?? [];
+    const activeBranchId = this.workContextService.getActiveBranchId();
+
+    const availableEmployees = this.employees.filter(employee => {
+      const belongsToBranch = !activeBranchId || employee.branches.some(branch => branch.id === activeBranchId);
+      const availableForSlot = !selectedSlot || availableIds.includes(employee.id);
+
+      return belongsToBranch && availableForSlot;
+    });
+
+    this.barberOptions = [
+      { id: null, label: 'Asignar automaticamente' },
+      ...availableEmployees.map(employee => ({
+        id: employee.id,
+        label: this.getBarberLabel(employee)
+      }))
+    ];
   }
 }

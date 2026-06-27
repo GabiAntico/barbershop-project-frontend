@@ -46,7 +46,8 @@
               [class.text-slate-500]="!slot.available"
               [class.cursor-not-allowed]="!slot.available"
             >
-              {{ slot.time }}
+              <span class="block">{{ slot.time }}</span>
+              <span class="mt-1 block text-[11px] font-medium opacity-80">{{ getAvailabilityLabel(slot) }}</span>
             </button>
           }
         }
@@ -78,6 +79,27 @@
           {{ getClientLabel(client) }}
         </ng-template>
       </p-select>
+    </div>
+
+    <div class="flex flex-col mb-4">
+      <label>Barbero</label>
+      <p-select
+        formControlName="assignedEmployeeId"
+        [options]="barberOptions"
+        optionLabel="label"
+        optionValue="id"
+        placeholder="Asignar automaticamente"
+        [disabled]="!hasSelectedTime()"
+        class="w-full h-10 rounded-lg
+         !bg-slate-950
+         !border !border-slate-700
+         focus:!border-indigo-400
+         focus:!ring-0
+         !text-slate-100">
+      </p-select>
+      @if (!hasSelectedTime()) {
+        <span class="mt-1 text-sm text-slate-400">Selecciona un horario para ver los barberos disponibles.</span>
+      }
     </div>
 
     <div class="flex flex-col mb-4">

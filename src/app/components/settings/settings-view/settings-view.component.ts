@@ -3,15 +3,20 @@ import { NgClass } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputText } from 'primeng/inputtext';
 import { DatePicker } from 'primeng/datepicker';
+import { Select } from 'primeng/select';
 import { MessageService } from 'primeng/api';
 import { SettingsService } from '../../../services/settings.service';
 import { ScheduleSlot, ScheduleSettingsRequest } from '../../../models/settings.model';
 import { WorkContextService } from '../../../services/work-context.service';
-import { Branch, Employee, WorkContext } from '../../../models/work-context.model';
+import { Branch, Employee, EmployeeScheduleDay, EmployeeScheduleDayName, WorkContext } from '../../../models/work-context.model';
 import { finalize } from 'rxjs';
 
 type SettingsTab = 'amount' | 'schedule' | 'branches' | 'employees';
 type ScheduleMode = 'DATE' | 'RANGE' | 'DEFAULT';
+type EmployeeScheduleDayView = EmployeeScheduleDay & {
+  startTimeDate: Date;
+  endTimeDate: Date;
+};
 
 @Component({
   selector: 'app-settings-view',
@@ -20,6 +25,7 @@ type ScheduleMode = 'DATE' | 'RANGE' | 'DEFAULT';
     FormsModule,
     ReactiveFormsModule,
     InputText,
+    Select,
     DatePicker
   ],
   templateUrl: './settings-view.component.html',
@@ -34,11 +40,22 @@ export class SettingsViewComponent implements OnInit {
   employeeForm!: FormGroup;
   employeeBranchesForm!: FormGroup;
   savedDefaultEstimatedAmount: number | null = null;
+  savedDefaultCurrency = 'ARS';
+  readonly currencyOptions = [
+    { label: 'ARS - Peso argentino', value: 'ARS' },
+    { label: 'USD - Dolar estadounidense', value: 'USD' },
+    { label: 'BRL - Real brasileno', value: 'BRL' },
+    { label: 'UYU - Peso uruguayo', value: 'UYU' },
+    { label: 'CLP - Peso chileno', value: 'CLP' }
+  ];
   context: WorkContext | null = null;
   branches: Branch[] = [];
   employees: Employee[] = [];
   selectedEmployee: Employee | null = null;
   savedSelectedEmployeeBranchIds: number[] = [];
+  selectedScheduleBranchId: number | null = null;
+  employeeScheduleDays: EmployeeScheduleDayView[] = [];
+  savedEmployeeScheduleSignature = '';
 
   activeTab: SettingsTab = 'amount';
   scheduleMode: ScheduleMode = 'DATE';
@@ -51,7 +68,27 @@ export class SettingsViewComponent implements OnInit {
   creatingBranch = false;
   creatingEmployee = false;
   savingEmployeeBranches = false;
+  loadingEmployeeSchedule = false;
+  savingEmployeeSchedule = false;
   minScheduleDate = new Date();
+  readonly employeeScheduleDayOrder: EmployeeScheduleDayName[] = [
+    'MONDAY',
+    'TUESDAY',
+    'WEDNESDAY',
+    'THURSDAY',
+    'FRIDAY',
+    'SATURDAY',
+    'SUNDAY'
+  ];
+  readonly employeeScheduleDayLabels: Record<EmployeeScheduleDayName, string> = {
+    MONDAY: 'Lunes',
+    TUESDAY: 'Martes',
+    WEDNESDAY: 'Miercoles',
+    THURSDAY: 'Jueves',
+    FRIDAY: 'Viernes',
+    SATURDAY: 'Sabado',
+    SUNDAY: 'Domingo'
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -62,7 +99,8 @@ export class SettingsViewComponent implements OnInit {
 
   ngOnInit() {
     this.amountForm = this.fb.group({
-      defaultEstimatedAmount: [0, [Validators.min(0)]]
+      defaultEstimatedAmount: [0, [Validators.min(0)]],
+      defaultCurrency: ['ARS', Validators.required]
     });
     this.branchForm = this.fb.group({
       name: ['', Validators.required],
@@ -91,8 +129,10 @@ export class SettingsViewComponent implements OnInit {
     this.settingsService.getSettings().subscribe({
       next: settings => {
         this.savedDefaultEstimatedAmount = settings.defaultEstimatedAmount ?? 0;
+        this.savedDefaultCurrency = settings.defaultCurrency ?? 'ARS';
         this.amountForm.patchValue({
-          defaultEstimatedAmount: this.savedDefaultEstimatedAmount
+          defaultEstimatedAmount: this.savedDefaultEstimatedAmount,
+          defaultCurrency: this.savedDefaultCurrency
         });
       },
       error: () => this.showError('No se pudo cargar la configuracion')
@@ -121,17 +161,21 @@ export class SettingsViewComponent implements OnInit {
     }
 
     const amount = form.get('defaultEstimatedAmount')!.value;
+    const currency = form.get('defaultCurrency')!.value || 'ARS';
 
     this.savingSettings = true;
     this.settingsService.putSettings({
-      defaultEstimatedAmount: amount === null || amount === '' ? 0 : Number(amount)
+      defaultEstimatedAmount: amount === null || amount === '' ? 0 : Number(amount),
+      defaultCurrency: currency
     }).pipe(
       finalize(() => this.savingSettings = false)
     ).subscribe({
       next: settings => {
         this.savedDefaultEstimatedAmount = settings.defaultEstimatedAmount ?? 0;
+        this.savedDefaultCurrency = settings.defaultCurrency ?? 'ARS';
         this.amountForm.patchValue({
-          defaultEstimatedAmount: this.savedDefaultEstimatedAmount
+          defaultEstimatedAmount: this.savedDefaultEstimatedAmount,
+          defaultCurrency: this.savedDefaultCurrency
         });
         this.showSuccess('Configuracion guardada correctamente');
       },
@@ -140,7 +184,8 @@ export class SettingsViewComponent implements OnInit {
   }
 
   hasSettingsChanges(): boolean {
-    return this.normalizeAmount(this.amountForm.get('defaultEstimatedAmount')?.value) !== this.normalizeAmount(this.savedDefaultEstimatedAmount);
+    return this.normalizeAmount(this.amountForm.get('defaultEstimatedAmount')?.value) !== this.normalizeAmount(this.savedDefaultEstimatedAmount)
+      || (this.amountForm.get('defaultCurrency')?.value || 'ARS') !== this.savedDefaultCurrency;
   }
 
   setActiveTab(tab: SettingsTab) {
@@ -236,6 +281,13 @@ export class SettingsViewComponent implements OnInit {
     this.savedSelectedEmployeeBranchIds = [...branchIds];
     this.employeeBranchesForm.patchValue({ branchIds });
     this.employeeBranchesForm.markAsPristine();
+    this.selectedScheduleBranchId = employee?.branches[0]?.id ?? null;
+    this.employeeScheduleDays = this.getDefaultEmployeeScheduleDays();
+    this.savedEmployeeScheduleSignature = this.getEmployeeScheduleSignature();
+
+    if (employee && this.selectedScheduleBranchId) {
+      this.loadEmployeeSchedule();
+    }
   }
 
   saveEmployeeBranches(): void {
@@ -301,6 +353,80 @@ export class SettingsViewComponent implements OnInit {
 
   getSelectedEmployeeBranchIds(): number[] {
     return [...(this.employeeBranchesForm.get('branchIds')?.value ?? [])].sort((a, b) => a - b);
+  }
+
+  onEmployeeScheduleBranchChange(branchId: number | string | null): void {
+    this.selectedScheduleBranchId = branchId ? Number(branchId) : null;
+    this.loadEmployeeSchedule();
+  }
+
+  loadEmployeeSchedule(): void {
+    if (!this.selectedEmployee || !this.selectedScheduleBranchId) {
+      this.employeeScheduleDays = this.getDefaultEmployeeScheduleDays();
+      this.savedEmployeeScheduleSignature = this.getEmployeeScheduleSignature();
+      return;
+    }
+
+    this.loadingEmployeeSchedule = true;
+    this.workContextService.getEmployeeSchedule(this.selectedEmployee.id, this.selectedScheduleBranchId).pipe(
+      finalize(() => this.loadingEmployeeSchedule = false)
+    ).subscribe({
+      next: schedule => {
+        this.employeeScheduleDays = this.normalizeEmployeeScheduleDays(schedule.days);
+        this.savedEmployeeScheduleSignature = this.getEmployeeScheduleSignature();
+      },
+      error: () => this.showError('No se pudo cargar el horario del empleado')
+    });
+  }
+
+  saveEmployeeSchedule(): void {
+    if (this.savingEmployeeSchedule) return;
+    if (!this.selectedEmployee || !this.selectedScheduleBranchId) return;
+
+    if (!this.hasValidEmployeeSchedule()) {
+      this.showError('Revisa los horarios: la salida debe ser posterior a la entrada');
+      return;
+    }
+
+    this.savingEmployeeSchedule = true;
+    this.workContextService.updateEmployeeSchedule(this.selectedEmployee.id, {
+      branchId: this.selectedScheduleBranchId,
+      days: this.getEmployeeSchedulePayload()
+    }).pipe(
+      finalize(() => this.savingEmployeeSchedule = false)
+    ).subscribe({
+      next: schedule => {
+        this.employeeScheduleDays = this.normalizeEmployeeScheduleDays(schedule.days);
+        this.savedEmployeeScheduleSignature = this.getEmployeeScheduleSignature();
+        this.showSuccess('Horario del empleado guardado correctamente');
+      },
+      error: error => this.showError(error?.error?.message ?? 'No se pudo guardar el horario del empleado')
+    });
+  }
+
+  toggleEmployeeScheduleDay(day: EmployeeScheduleDayView): void {
+    day.enabled = !day.enabled;
+  }
+
+  hasEmployeeScheduleChanges(): boolean {
+    return this.getEmployeeScheduleSignature() !== this.savedEmployeeScheduleSignature;
+  }
+
+  hasValidEmployeeSchedule(): boolean {
+    return this.employeeScheduleDays.every(day => {
+      if (!day.enabled) return true;
+      return this.minutesBetween(day.startTime, day.endTime) > 0;
+    });
+  }
+
+  getEmployeeScheduleDayLabel(day: EmployeeScheduleDayName): string {
+    return this.employeeScheduleDayLabels[day];
+  }
+
+  onEmployeeScheduleTimeChange(day: EmployeeScheduleDayView, field: 'startTime' | 'endTime', value: Date | null): void {
+    if (!value) return;
+
+    day[field] = this.formatTime(value);
   }
 
   onScheduleModeChange(mode: ScheduleMode) {
@@ -503,7 +629,7 @@ export class SettingsViewComponent implements OnInit {
     return true;
   }
 
-  private minutesBetween(start: string, end: string): number {
+  minutesBetween(start: string, end: string): number {
     const [startHour, startMinute] = start.split(':').map(Number);
     const [endHour, endMinute] = end.split(':').map(Number);
 
@@ -512,6 +638,59 @@ export class SettingsViewComponent implements OnInit {
 
   private getSlotTimes(slots: ScheduleSlot[]): string[] {
     return slots.map(slot => slot.time).sort();
+  }
+
+  private getDefaultEmployeeScheduleDays(): EmployeeScheduleDayView[] {
+    return this.employeeScheduleDayOrder.map(dayOfWeek => ({
+      dayOfWeek,
+      enabled: false,
+      startTime: '10:00',
+      endTime: '20:00',
+      startTimeDate: this.timeStringToDate('10:00'),
+      endTimeDate: this.timeStringToDate('20:00')
+    }));
+  }
+
+  private normalizeEmployeeScheduleDays(days: EmployeeScheduleDay[]): EmployeeScheduleDayView[] {
+    const source = new Map(days.map(day => [day.dayOfWeek, day]));
+
+    return this.employeeScheduleDayOrder.map(dayOfWeek => {
+      const day = source.get(dayOfWeek);
+      const startTime = day?.startTime?.slice(0, 5) || '10:00';
+      const endTime = day?.endTime?.slice(0, 5) || '20:00';
+
+      return {
+        dayOfWeek,
+        enabled: Boolean(day?.enabled),
+        startTime,
+        endTime,
+        startTimeDate: this.timeStringToDate(startTime),
+        endTimeDate: this.timeStringToDate(endTime)
+      };
+    });
+  }
+
+  private getEmployeeScheduleSignature(): string {
+    return this.employeeScheduleDays
+      .map(day => `${day.dayOfWeek}:${day.enabled ? '1' : '0'}:${day.startTime}:${day.endTime}`)
+      .join('|');
+  }
+
+  private getEmployeeSchedulePayload(): EmployeeScheduleDay[] {
+    return this.employeeScheduleDays.map(day => ({
+      dayOfWeek: day.dayOfWeek,
+      enabled: day.enabled,
+      startTime: day.startTime,
+      endTime: day.endTime
+    }));
+  }
+
+  private timeStringToDate(time: string): Date {
+    const [hours, minutes] = (time || '00:00').split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours || 0, minutes || 0, 0, 0);
+
+    return date;
   }
 
   private normalizeAmount(value: unknown): number {

@@ -2,7 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Branch, CreateBranchRequest, CreateEmployeeRequest, Employee, UpdateEmployeeBranchesRequest, WorkContext } from '../models/work-context.model';
+import {
+  Branch,
+  CreateBranchRequest,
+  CreateEmployeeRequest,
+  Employee,
+  EmployeeSchedule,
+  EmployeeScheduleRequest,
+  UpdateEmployeeBranchesRequest,
+  WorkContext
+} from '../models/work-context.model';
 
 @Injectable({
   providedIn: 'root'
@@ -77,6 +86,16 @@ export class WorkContextService {
 
   updateEmployeeBranches(employeeId: number, request: UpdateEmployeeBranchesRequest): Observable<Employee> {
     return this.http.put<Employee>(`${this.baseUrl}/employees/${employeeId}/branches`, request);
+  }
+
+  getEmployeeSchedule(employeeId: number, branchId: number): Observable<EmployeeSchedule> {
+    return this.http.get<EmployeeSchedule>(`${this.baseUrl}/employees/${employeeId}/schedule`, {
+      params: { branchId }
+    });
+  }
+
+  updateEmployeeSchedule(employeeId: number, request: EmployeeScheduleRequest): Observable<EmployeeSchedule> {
+    return this.http.put<EmployeeSchedule>(`${this.baseUrl}/employees/${employeeId}/schedule`, request);
   }
 
   private ensureActiveBranch(context: WorkContext): void {

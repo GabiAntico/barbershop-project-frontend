@@ -35,7 +35,11 @@ export class VisitsViewComponent implements OnInit {
     { label: 'Pagados', value: 'PAID' },
     { label: 'Parciales', value: 'PARTIAL' },
     { label: 'Reembolsados', value: 'REFUNDED' },
+    { label: 'Reembolso parcial', value: 'PARTIALLY_REFUNDED' },
     { label: 'Bonificados', value: 'BONIFIED' },
+    { label: 'Pago con bonif.', value: 'PAID_WITH_BONIFICATION' },
+    { label: 'Ajustados', value: 'PAID_WITH_ADJUSTMENT' },
+    { label: 'Parcial ajuste', value: 'PARTIAL_WITH_ADJUSTMENT' },
   ];
 
   readonly paymentStatusLabels: Record<string, string> = {
@@ -43,7 +47,11 @@ export class VisitsViewComponent implements OnInit {
     PAID: 'Pagado',
     PARTIAL: 'Parcial',
     REFUNDED: 'Reembolsado',
+    PARTIALLY_REFUNDED: 'Reembolso parcial',
     BONIFIED: 'Bonificado',
+    PAID_WITH_BONIFICATION: 'Pagado con bonificacion',
+    PARTIAL_WITH_ADJUSTMENT: 'Parcial con ajuste',
+    PAID_WITH_ADJUSTMENT: 'Pagado con ajuste',
   };
 
   readonly paymentMethodLabels: Record<string, string> = {
@@ -57,7 +65,10 @@ export class VisitsViewComponent implements OnInit {
   ngOnInit(): void {
     this.visitService.getAllVisits().subscribe({
       next: data => {
-        this.originalSorted = this.sortVisits(data);
+        this.originalSorted = this.sortVisits(data.map(visit => ({
+          ...visit,
+          paymentMethodSummary: this.getPaymentMethodSummary(visit)
+        })));
         this.applyPaymentStatusFilter();
       },
       error: err => console.error(err)
@@ -73,35 +84,53 @@ export class VisitsViewComponent implements OnInit {
   }
 
   getPaymentStatusLabel(status: string): string {
-    return this.paymentStatusLabels[status] ?? status ?? '-';
+    return this.paymentStatusLabels[status] ?? status ?? '\u2014';
   }
 
   getPaymentMethodLabel(method: string | null): string {
-    if (!method) return '-';
+    if (!method) return '\u2014';
 
-    return this.paymentMethodLabels[method] ?? method ?? '-';
+    return this.paymentMethodLabels[method] ?? method ?? '\u2014';
+  }
+
+  getPaymentMethodSummary(visit: VisitResponse): string {
+    const paymentMethods = new Set(
+      (visit.paymentMovements ?? [])
+        .filter(movement => movement.type === 'PAYMENT' && !!movement.paymentMethod)
+        .map(movement => movement.paymentMethod as string)
+    );
+
+    if (paymentMethods.size > 1) {
+      return 'Mixto';
+    }
+
+    if (paymentMethods.size === 1) {
+      return this.getPaymentMethodLabel([...paymentMethods][0]);
+    }
+
+    return this.getPaymentMethodLabel(visit.paymentMethod);
   }
 
   getAttendedByLabel(visit: VisitResponse): string {
-    return visit.attendedByName || visit.attendedByEmail || '-';
+    return visit.attendedByName || visit.attendedByEmail || '\u2014';
   }
 
   getClientLabel(client: ClientResponse | null): string {
-    if (!client) return '-';
+    if (!client) return '\u2014';
 
     const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ');
     const contact = client.email ? `${client.phoneNumber} - ${client.email}` : client.phoneNumber;
 
-    return fullName ? `${fullName} - ${client.phoneNumber}` : contact || '-';
+    return fullName ? `${fullName} - ${client.phoneNumber}` : contact || '\u2014';
   }
 
   getClientPrimary(client: ClientResponse | null): string {
-    if (!client) return '-';
+    if (!client) return '\u2014';
 
     return [client.firstName, client.lastName].filter(Boolean).join(' ')
       || client.phoneNumber
       || client.email
-      || '-';
+      || '\u2014';
   }
 
   get filteredVisits(): VisitResponse[] {
@@ -115,8 +144,11 @@ export class VisitsViewComponent implements OnInit {
       visit.currency,
       this.getPaymentStatusLabel(visit.paymentStatus),
       visit.paymentStatus,
-      this.getPaymentMethodLabel(visit.paymentMethod),
-      visit.paymentMethod
+      this.getPaymentMethodSummary(visit),
+      visit.paymentMethod,
+      ...(visit.paymentMovements ?? []).map(movement => this.getPaymentMethodLabel(movement.paymentMethod)),
+      visit.netPaidAmount?.toString(),
+      visit.pendingAmount?.toString()
     ].some(value => (value || '').toLowerCase().includes(term)));
   }
 

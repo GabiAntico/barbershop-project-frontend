@@ -43,20 +43,22 @@ export class ClientsViewComponent implements OnInit {
   }
 
   viewClient(id: number) {
-    this.router.navigate(['/dashboard/clients'], {
-      queryParams: { clientId: id }
-    });
+    this.router.navigate(['/clients', id]);
   }
 
   getClientName(client: ClientResponse): string {
-    return [client.firstName, client.lastName].filter(Boolean).join(' ') || '—';
+    return [client.firstName, client.lastName].filter(Boolean).join(' ') || '\u2014';
   }
 
   getClientPrimary(client: ClientResponse): string {
     return [client.firstName, client.lastName].filter(Boolean).join(' ')
       || client.phoneNumber
       || client.email
-      || '-';
+      || '\u2014';
+  }
+
+  getResponsibleName(client: ClientResponse): string {
+    return client.selfResponsible === false ? (client.responsibleContactName || '\u2014') : '\u2014';
   }
 
   get filteredClients(): ClientResponse[] {
@@ -67,6 +69,7 @@ export class ClientsViewComponent implements OnInit {
     return this.clients.filter(client => [
       client.firstName,
       client.lastName,
+      client.responsibleContactName,
       client.email,
       client.phoneNumber
     ].some(value => (value || '').toLowerCase().includes(term)));

@@ -1,9 +1,11 @@
 export interface AppSettings {
   defaultEstimatedAmount: number | null;
+  defaultCurrency: string | null;
 }
 
 export interface AppSettingsRequest {
   defaultEstimatedAmount: number | null;
+  defaultCurrency: string;
 }
 
 export interface ScheduleSlot {

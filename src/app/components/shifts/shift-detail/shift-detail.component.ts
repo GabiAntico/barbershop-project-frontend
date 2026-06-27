@@ -63,29 +63,35 @@ export class ShiftDetailComponent implements OnInit {
   }
 
   getClientPrimary(): string {
-    if (!this.client) return '-';
+    if (!this.client) return '\u2014';
 
     const fullName = [this.client.firstName, this.client.lastName].filter(Boolean).join(' ');
 
-    return fullName || this.client.phoneNumber || this.client.email || '-';
+    return fullName || this.client.phoneNumber || this.client.email || '\u2014';
+  }
+
+  getAssignedEmployeeLabel(): string {
+    if (!this.shift?.assignedEmployee) return '\u2014';
+
+    return this.shift.assignedEmployee.displayName || this.shift.assignedEmployee.email || '\u2014';
   }
 
   formatShiftDate(datetime: string | null | undefined): string {
-    if (!datetime) return '-';
+    if (!datetime) return '\u2014';
 
     return datetime.includes('T') ? datetime.split('T')[0] : datetime.split(' ')[0];
   }
 
   formatShiftTime(datetime: string | null | undefined): string {
-    if (!datetime) return '-';
+    if (!datetime) return '\u2014';
 
     return datetime.includes('T')
       ? datetime.split('T')[1].substring(0, 5)
-      : datetime.split(' ')[1] || '-';
+      : datetime.split(' ')[1] || '\u2014';
   }
 
   formatAmount(amount: number | null | undefined): string {
-    if (amount === null || amount === undefined) return '-';
+    if (amount === null || amount === undefined) return '\u2014';
 
     return `$ ${Number(amount).toFixed(2)}`;
   }

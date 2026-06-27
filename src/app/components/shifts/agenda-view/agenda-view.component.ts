@@ -139,14 +139,64 @@ export class AgendaViewComponent implements OnInit {
     return !Number.isNaN(slotTime) && slotTime >= Date.now();
   }
 
-  getClientName(client: ClientResponse | null | undefined): string {
-    if (!client) return '-';
+  sendWhatsAppReminderForShift(shift: AgendaSlotResponse['shift'], time: string): void {
+    if (!shift || !this.canSendWhatsAppReminderForShift(shift, time)) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Turno pasado',
+        detail: 'No se puede enviar un recordatorio para un turno que ya paso'
+      });
+      return;
+    }
 
-    return [client.firstName, client.lastName].filter(Boolean).join(' ') || '-';
+    const client = shift.client;
+    const phoneNumber = this.normalizePhoneNumber(client?.phoneNumber);
+
+    if (!phoneNumber) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Telefono faltante',
+        detail: 'El cliente no tiene un telefono valido para enviar WhatsApp'
+      });
+      return;
+    }
+
+    const firstName = client?.firstName?.trim();
+    const greeting = firstName ? `Hola ${firstName},` : 'Hola,';
+    const message = `${greeting} te recordamos que tenes un turno el ${this.getReminderDateText(time)} a las ${time}.`;
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+    window.open(url, '_blank', 'noopener');
+  }
+
+  canSendWhatsAppReminderForShift(shift: AgendaSlotResponse['shift'], time: string): boolean {
+    if (!shift) return false;
+
+    const slotTime = this.getSlotDateTime(time).getTime();
+
+    return !Number.isNaN(slotTime) && slotTime >= Date.now();
+  }
+
+  getClientName(client: ClientResponse | null | undefined): string {
+    if (!client) return '\u2014';
+
+    return [client.firstName, client.lastName].filter(Boolean).join(' ') || '\u2014';
   }
 
   getStatusLabel(status: ShiftStatus): string {
     return this.statusLabels[status];
+  }
+
+  getEmployeeLabel(shift: AgendaSlotResponse['shift']): string {
+    if (!shift?.assignedEmployee) return '\u2014';
+
+    return shift.assignedEmployee.displayName || shift.assignedEmployee.email || '\u2014';
+  }
+
+  getCapacityLabel(slot: AgendaSlotResponse): string {
+    if (slot.totalCapacity <= 0) return 'Sin barberos asignados';
+
+    return `${slot.availableCount}/${slot.totalCapacity} cupos libres`;
   }
 
   getDisplayDate(): string {
